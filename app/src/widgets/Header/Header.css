@@ -1,0 +1,29 @@
+.header {
+    display: flex;
+    height: 35px;
+    width: 100%;
+    top: 0;
+    position: fixed;
+    justify-content: center;
+    background-color: rgba(245, 245, 245, 0.74);
+    z-index: 1;
+    backdrop-filter: blur(30px);
+}
+
+.header-menus {
+    display: grid;
+    grid-auto-flow: column;
+    grid-column-gap: 36px;
+    height: 11px;
+    margin: auto;
+}
+
+.header-tab {
+    width: 153px;
+    background-color: #BBBBBB;
+    border-radius: 23px;
+}
+
+.header-active-tab {
+    background-color: black;
+}

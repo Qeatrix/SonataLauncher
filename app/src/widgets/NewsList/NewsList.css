@@ -1,0 +1,93 @@
+:root {
+    --minecraft-new-tag: #AE32E9;
+}
+
+.feed {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    margin-top: 35px;
+    padding-top: 50px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+.feed-bg {
+    height: 100%;
+    width: 50%;
+    right: 0;
+    background: url('./assets/BG.png') no-repeat left center;
+    background-size: cover;
+    position: fixed;
+    z-index: -1;
+}
+
+.new {
+    max-width: 892px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: auto;
+    padding: 30px;
+    gap: 20px;
+    background: rgba(245, 245, 245, 0.74);
+    border-radius: 49px;
+    backdrop-filter: blur(30px);
+    transform: translateZ(0);
+}
+
+.new > img {
+    width: 100%;
+}
+
+.new-header {
+    display: flex;
+    gap: 10px;
+}
+
+.new-tag {
+    padding: 4px 7px;
+    background-color: var(--minecraft-new-tag);
+    color: white;
+    font-size: 24px;
+    font-weight: 400;
+    text-transform: capitalize;
+    border-radius: 16px;
+}
+
+.new-name {
+    font-family: Inter-Medium;
+    font-size: 32px;
+    text-transform: capitalize;
+}
+
+.new-descr {
+    font-size: 19px;
+    letter-spacing: -0.012em;
+}
+
+.new-footer {
+    display: flex;
+    gap: 20px;
+}
+
+.new-footer > a {
+    display: flex;
+    height: 40px;
+    margin: auto;
+    padding: 5px 15px;
+    font-size: 19px;
+    background: #32E95A;
+    box-shadow: 0px 0px 10px rgba(0, 255, 10, 0.5);
+    border-radius: 16px;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+}
+
+.new-footer > p {
+    font-size: 18.87px;
+    color: #868686;
+    text-transform: capitalize;
+}
