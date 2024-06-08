@@ -3,7 +3,7 @@
     height: 35px;
     width: 100%;
     top: 0;
-    position: fixed;
+    position: sticky;
     justify-content: center;
     background-color: rgba(245, 245, 245, 0.74);
     z-index: 1;

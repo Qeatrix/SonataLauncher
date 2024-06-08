@@ -1,0 +1,28 @@
+@font-face {
+    font-family: "Inter";
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings:
+    "slnt" 0;
+    src: local('Inter'),
+         url('../assets/fonts/Inter-Regular.ttf') format('truetype'),
+}
+
+@font-face {
+    font-family: "Inter-Medium";
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
+    font-variation-settings:
+    "slnt" 0;
+    src: local('Inter-Medium'),
+         url('../assets/fonts/Inter-Medium.ttf') format('truetype'),
+}
+
+body {
+    font-family: Inter;
+    letter-spacing: -0.052em;
+    box-sizing: border-box;
+    margin: 0;
+}

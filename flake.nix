@@ -18,12 +18,15 @@
           pkgs = pkgsFor system;
           packagesD = with pkgs; [
               electron_30-bin
+              chromium
+              ungoogled-chromium
+              gtk3
 
               # Compilers
               cargo
               rustc
               cargo-tauri
-              nodejs
+              nodejs_22
 
               # Libs
               openssl_3
