@@ -16,6 +16,7 @@ class Api {
                     throw new Error(`HTTP Error, status: ${response.status}`);
                 }
 
+                console.log(response);
                 return response.json();
             })
             .then(json => {
@@ -31,6 +32,32 @@ class Api {
         return new Promise<JSON>((res, rej) => {
             fetch(Api.url + Constants.endpoints.versionsManifest, {
                 method: 'GET',
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP Error, status: ${response.status}`);
+                }
+
+                return response.json();
+            })
+            .then(json => {
+                res(json);
+            })
+            .catch(err => {
+                rej(err);
+            })
+        })
+    }
+
+    public async requestVersionDownload(name: string, version: string, url: string): Promise<JSON> {
+        return new Promise<JSON>((res, rej) => {
+            fetch(Api.url + Constants.endpoints.createInstance, {
+                method: 'POST',
+                body: JSON.stringify({
+                    name,
+                    version,
+                    url
+                })
             })
             .then(response => {
                 if (!response.ok) {

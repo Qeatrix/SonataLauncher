@@ -1,10 +1,15 @@
+import { Version } from "@/data/types";
+
 class Store {
     private static globalVersionsManifest = {
-        key: 'versionsManifest',
+        key: 'globalVersionsManifest',
         data: {}
     };
 
-    private static versionManifest = {}
+    private static selectedVersionManifest = {
+        key: 'selectedVersionManifest',
+        data: {}
+    }
 
     public getGlobalManifestData() {
         const storedData = localStorage.getItem(Store.globalVersionsManifest.key);
@@ -21,13 +26,17 @@ class Store {
     }
 
     public getVersionManifestData(version: string) {
-        const storedData = localStorage.getItem(version);
+        const storedData = localStorage.getItem(Store.selectedVersionManifest.key);
 
         if (storedData) {
             return JSON.parse(storedData);
         } else {
-            return {};
+            return Store.selectedVersionManifest.data;
         }
+    }
+
+    public setVersionManifestData(version: string, data: Version) {
+        localStorage.setItem(Store.selectedVersionManifest.key, JSON.stringify(data));
     }
 }
 

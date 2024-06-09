@@ -1,6 +1,3 @@
-use std::fs;
-use async_std::fs::create_dir;
-use async_std::task::block_on;
 use serde_json;
 use tide::Request;
 use tide::prelude::*;
@@ -8,6 +5,9 @@ use surf;
 
 pub mod instance;
 use instance::Instance;
+
+pub mod root;
+use root::LauncherRoot;
 
 #[derive(Debug, Deserialize)]
 struct Animal {
@@ -18,10 +18,18 @@ struct Animal {
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     let mut app = tide::new();
+    
+    // Example Data
     app.at("/orders/shoes").post(order_shoes);
-    app.at("/init/root").post(init_sonata_root);
+
+    // Init routes
+    app.at("/init/root").post(handle_init_root);
+
+    // Instance routes
     app.at("/instance/download_versions").get(get_versions);
     app.at("/instance/create").post(create_instance);
+
+    // Run server
     app.listen("127.0.0.1:8080").await?;
     Ok(())
 }
@@ -39,36 +47,18 @@ async fn order_shoes(mut req: Request<()>) -> tide::Result {
         .build())
 }
 
-#[derive(Deserialize)]
-struct LauncherRoot {
-    path: String,
-}
 
-async fn init_sonata_root(mut req: Request<()>) -> tide::Result {
-    let LauncherRoot { path } = req.body_json().await?;
-    println!("Trying to create new root: {path}");
+async fn handle_init_root(mut req: Request<()>) -> tide::Result {
+    let launcher_root: LauncherRoot = req.body_json().await?;
 
-    let response: serde_json::Value;
-    match block_on(create_dir(&path)) {
-        Ok(_) => {
-            println!("Created new root: {:?}", fs::canonicalize(path));
-            response = json!({
-                "result": "Launcher root successfuly created"
-            });
-        },
-        Err(e) => {
-            println!("Failed to create root: {:?}", fs::canonicalize(path));
-            response = json!({
-                "result": format!("Failed to initialize launcher root: {}", e)
-            });
-        },
-    }
+    let response = json!({ "message": launcher_root.init_root() });
 
     Ok(tide::Response::builder(200)
         .body(response)
         .content_type(tide::http::mime::JSON)
         .build())
 }
+
 
 async fn get_versions(_req: Request<()>) -> tide::Result {
     let url = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
@@ -100,17 +90,18 @@ async fn get_versions(_req: Request<()>) -> tide::Result {
 }
 
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct InstanceRequest {
     name: String,
-    version: String
+    version: String,
+    url: String,
 }
 
 async fn create_instance(mut req: Request<()>) -> tide::Result {
-    let InstanceRequest { name, version } = req.body_json().await?;
+    let InstanceRequest { name, version, url } = req.body_json().await?;
 
     let response: serde_json::Value;
-    match Instance::init(name, version) {
+    match Instance::init(&Instance::new(name, version, url)).await {
         Ok(result) => {
             response = json!({
                 "result": format!("Created, {}", result)

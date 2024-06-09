@@ -26,6 +26,8 @@ const Instances = () => {
         url: ''
     });
 
+    const selectedVersionNumber = ref<number>(0);
+
 
     setTimeout(() => {
         versionsManifest.val = Store.getGlobalManifestData() as unknown as VersionsManifest;
@@ -39,24 +41,29 @@ const Instances = () => {
 
     const createLauncherRoot = async () => {
         Api.createLauncherRoot(rootPath.val)
-            .then(json => { console.log(json); Store.setGlobalManifestData(json) })
+            .then(json => { console.log(json) })
             .catch(err => { console.log(err) })
     }
 
     const getVersionsManifest = async () => {
         Api.getVersionsManifest()
             .then(json => { 
-                console.log(json); 
                 Store.setGlobalManifestData(json); 
-                console.log(Store.getGlobalManifestData());
-                versionsManifest.val = Store.getGlobalManifestData() as unknown as VersionsManifest; 
+                versionsManifest.val = json as unknown as VersionsManifest; 
             })
             .catch(err => { console.log(err) })
     }
 
-    const handleVersionChange = async (version: Version) => {
-        console.log(`id: ${version.id}, url: ${version.url}`);
+    const requestVersionDownload = async () => {
+        Api.requestVersionDownload(selectedVersion.val.id, selectedVersion.val.id, selectedVersion.val.url)
+            .then(json => { console.log(json) })
+            .catch(err => { console.log(err) })
+    }
+
+    const handleVersionChange = async (e: PointerEvent, version: Version, key: number) => {
         selectedVersion.val = version;
+        Store.setVersionManifestData(version.id, version);
+        selectedVersionNumber.val = key;
     }
 
     return (
@@ -66,10 +73,17 @@ const Instances = () => {
             <br /><br />
             <button onClick={getVersionsManifest}>Get Versions</button>
             <div class={css.selectionArea}>
-                {versionsManifest.derive(val => val?.versions.map((version) => (
-                    <button class={css.button} onClick={() => handleVersionChange(version)}>{version.id}</button>
+                {versionsManifest.derive(val => val?.versions.map((version, key) => (
+                    <button
+                        class={selectedVersionNumber.derive(val => `${css.button} ${val === key ? css.selectedButton : ''}`)}
+                        key={key}
+                        onClick={(e: PointerEvent) => handleVersionChange(e, version, key)}
+                    >
+                        {version.id}
+                    </button>
                 )))}
             </div>
+            <button onClick={requestVersionDownload}>Continue</button>
         </>
     );
 };

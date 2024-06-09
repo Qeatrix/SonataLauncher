@@ -4,7 +4,8 @@ class Constants {
     public readonly endpoints = {
         exampleData: "orders/shoes",
         createRoot: "init/root",
-        versionsManifest: "instance/download_versions"
+        versionsManifest: "instance/download_versions",
+        createInstance: "instance/create",
     }
 }
 
