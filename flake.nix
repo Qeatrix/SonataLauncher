@@ -21,6 +21,7 @@
               chromium
               ungoogled-chromium
               gtk3
+              rustup
 
               # Compilers
               cargo

@@ -17,3 +17,6 @@ Build ActionHandler
 ```
 cd backend && cargo run build
 ```
+
+## Application Architecture
+![Application Architecture Map](./Application%20Architecture.png)

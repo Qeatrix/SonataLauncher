@@ -10,6 +10,6 @@ tide = "0.16.0"
 async-std = { version = "1.12.0", features = ["attributes"] }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
-reqwest = { version = "0.12.4", features = ["json"] }
+futures = "0.3.30"
 surf = "2.3.2"
 crossterm = "0.27"

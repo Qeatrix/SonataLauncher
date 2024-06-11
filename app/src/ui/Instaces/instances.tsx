@@ -55,6 +55,7 @@ const Instances = () => {
     }
 
     const requestVersionDownload = async () => {
+        console.log(selectedVersion.val.url);
         Api.requestVersionDownload(selectedVersion.val.id, selectedVersion.val.id, selectedVersion.val.url)
             .then(json => { console.log(json) })
             .catch(err => { console.log(err) })
@@ -72,6 +73,8 @@ const Instances = () => {
             <button onClick={createLauncherRoot}>Create launcher root</button>
             <br /><br />
             <button onClick={getVersionsManifest}>Get Versions</button>
+            <br /><br />
+            <input type="text" id="instance-name" />
             <div class={css.selectionArea}>
                 {versionsManifest.derive(val => val?.versions.map((version, key) => (
                     <button

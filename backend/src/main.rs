@@ -9,6 +9,9 @@ use instance::Instance;
 pub mod root;
 use root::LauncherRoot;
 
+mod threadpool;
+
+
 #[derive(Debug, Deserialize)]
 struct Animal {
     name: String,
@@ -31,6 +34,7 @@ async fn main() -> tide::Result<()> {
 
     // Run server
     app.listen("127.0.0.1:8080").await?;
+
     Ok(())
 }
 
@@ -62,31 +66,34 @@ async fn handle_init_root(mut req: Request<()>) -> tide::Result {
 
 async fn get_versions(_req: Request<()>) -> tide::Result {
     let url = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
+
+    let result;
+    let code;
+
     match surf::get(url).await {
         Ok(mut response) => {
             match response.body_json::<serde_json::Value>().await {
                 Ok(data) => {
-                    Ok(tide::Response::builder(200)
-                        .body(data)
-                        .content_type(tide::http::mime::JSON)
-                        .build())
+                    result = data;
+                    code = 200;
                 },
                 Err(_) => {
-                    Ok(tide::Response::builder(500)
-                        .body(json!({ "message": "Failed to parse JSON" }))
-                        .content_type(tide::http::mime::JSON)
-                        .build())
+                        result = json!({ "message": "Failed to parse JSON" });
+                        code = 500;
                 }
             }
         },
 
         Err(_) => {
-            Ok(tide::Response::builder(500)
-                .body(json!({ "message": "Failed to download versions manifest" }))
-                .content_type(tide::http::mime::JSON)
-                .build())
+                result = json!({ "message": "Failed to download versions manifest" });
+                code = 500;
         }
     }
+
+    Ok(tide::Response::builder(code)
+        .body(result)
+        .content_type(tide::http::mime::JSON)
+        .build())
 }
 
 
