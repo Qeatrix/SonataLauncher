@@ -22,6 +22,9 @@
               ungoogled-chromium
               gtk3
               rustup
+              openjdk
+              mesa
+              glfw
 
               # Compilers
               cargo
@@ -51,6 +54,7 @@
           default = pkgs.mkShell {
             name = "xx";
             nativeBuildInputs = packagesD;
+            LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath packagesD}/run/opengl-driver/lib:/run/opengl-driver-32/lib";
           };
           shellHook =
             ''

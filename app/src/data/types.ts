@@ -16,3 +16,13 @@ export interface VersionsManifest {
 
     versions: Version[];
 }
+
+export interface RequestInstance {
+    name: string,
+    url: string,
+    info: Record<string, string>;
+}
+
+export interface Loader {
+    name: string,
+}

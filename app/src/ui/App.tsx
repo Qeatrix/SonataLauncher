@@ -1,7 +1,7 @@
 import { ref } from "hywer"
 
-import Header from "./Header/Header"
-import NewsList from "./NewsList/NewsList"
+import Header from "@/ui/widgets/Header/Header"
+import NewsList from "@/ui/widgets/NewsList/NewsList"
 
 import css from "./App.module.less"
 import "./App.css"

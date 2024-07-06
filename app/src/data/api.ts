@@ -1,4 +1,5 @@
 import Constants from "@/data/constants";
+import { RequestInstance } from "@/data/types";
 
 class Api {
     public static readonly url = Constants.apiUrl;
@@ -49,15 +50,18 @@ class Api {
         })
     }
 
-    public async requestVersionDownload(name: string, version: string, url: string): Promise<JSON> {
+    public async requestVersionDownload(name: string, url: string, info: Record<string, string>): Promise<JSON> {
+        let body = JSON.stringify({
+            name,
+            url,
+            info
+        })
+
+        console.log(body);
         return new Promise<JSON>((res, rej) => {
             fetch(Api.url + Constants.endpoints.createInstance, {
                 method: 'POST',
-                body: JSON.stringify({
-                    name,
-                    version,
-                    url
-                })
+                body: body
             })
             .then(response => {
                 if (!response.ok) {

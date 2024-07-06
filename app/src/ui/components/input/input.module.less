@@ -1,0 +1,46 @@
+@import "../globalcss/anims.module.less";
+
+.Wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    box-sizing: border-box;
+    gap: 5px;
+
+    width: 100%;
+
+    p {
+        font-size: 19px;
+        margin: 0;
+    }
+
+    input {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        padding: 7px 8px;
+        gap: 10px;
+        font-family: Regular;
+        font-size: 16px;
+        background: #FBFBFB;
+        border: 2px solid #EBEBEB;
+
+        width: 100%;
+        // width: 210px;
+        height: 35px;
+
+        background: #FFFFFF;
+        border-radius: 11px;
+
+        transition: box-shadow 0.15s, border 0.15s;
+    }
+
+    input:focus {
+        border: 2px solid transparent;
+        outline: none;
+        box-shadow: 0px 0px 0px 2.5px rgba(0, 122, 255, 0.5);
+    }
+}

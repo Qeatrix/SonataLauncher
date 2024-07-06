@@ -1,0 +1,19 @@
+@import "./vars/vars.module.less";
+
+@method: outline;
+
+@keyframes focus {
+    0% {
+        @{method}: @focus-color-1 2px solid;
+    } 
+    50% {
+        @{method}: @focus-color-2 2px solid;
+    }
+    100% {
+        @{method}: @focus-color-1 2px solid;
+    }
+}
+
+.anim-focus {
+    animation: focus 1s infinite linear alternate;
+}

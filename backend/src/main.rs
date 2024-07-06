@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde_json;
 use tide::Request;
 use tide::prelude::*;
@@ -100,15 +102,19 @@ async fn get_versions(_req: Request<()>) -> tide::Result {
 #[derive(Debug, Deserialize)]
 struct InstanceRequest {
     name: String,
-    version: String,
     url: String,
+    info: HashMap<String, String>
 }
 
 async fn create_instance(mut req: Request<()>) -> tide::Result {
-    let InstanceRequest { name, version, url } = req.body_json().await?;
+    let InstanceRequest { name, url, info } = req.body_json().await?;
+
+    for (k, v) in info.iter() {
+        println!("k: {}, v: {}", k, v);
+    }
 
     let response: serde_json::Value;
-    match Instance::init(&Instance::new(name, version, url)).await {
+    match Instance::init(&mut Instance::new(name, url, info)).await {
         Ok(result) => {
             response = json!({
                 "result": format!("Created, {}", result)

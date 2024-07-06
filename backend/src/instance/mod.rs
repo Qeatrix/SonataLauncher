@@ -1,111 +1,132 @@
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use async_std::fs::create_dir_all;
 
 pub mod download;
+use async_std::fs::File;
 use download::libs;
 use download::assets;
 use download::manifest;
 
 pub mod launch;
 
-pub struct Instance<'a> {
+
+pub struct Paths {
+    root: String,
+    libs: String,
+    assets: String,
+    instance: String,
+    meta: String,
+}
+
+pub struct Instance {
     name: String,
-    version: String,
     url: String,
-    libs: HashMap<&'a str, (&'a str, &'a str)> 
+    info: HashMap<String, String>
 }
 
-#[derive(Debug)]
-pub struct LaunchArgs {
-    username: String,
-    version: String,
-    game_dir: String,
-    assets_dir: String,
-    asset_index: String,
-    libs_dir: Vec<String>,
-    uuid: String,
-    access_token: String,
-    client_id: String,
-    x_id: String,
-    user_type: String,
-    version_type: String,
-    main_class: String,
-}
-
-impl Instance<'_> {
-    pub fn new<'a>(name: String, version: String, url: String) -> Instance<'a> {
+impl Instance {
+    pub fn new(name: String, url: String, info: HashMap<String, String>) -> Instance {
         Instance {
             name,
-            version,
             url,
-            libs: HashMap::new()
+            info
         }
     }
 
-    pub async fn init(&self) -> Result<String, String> {
+    pub async fn init(&mut self) -> Result<String, String> {
+
+        // Get default paths
+        let paths = get_required_paths(&self.name);
+
+        match create_dir_all(&paths.root).await {
+            Ok(_) => println!("Launcher root directory initialized"),
+            Err(e) => {
+                return Err(format!("{}", e));
+            },
+        };
+
+        self.info.entry("${game_directory}".to_string()).or_insert_with(|| paths.instance.to_string());
+        self.info.entry("${assets_root}".to_string()).or_insert_with(|| paths.assets.to_string());
+        self.info.entry("${user_properties}".to_string()).or_insert_with(|| "{}".to_string());
+
         // Get minecraft version manifest
         let verson_manifest: serde_json::Value;
-        match manifest::download_manifest(&self.url).await {
+        match manifest::download_manifest(&self.url, &paths.meta).await {
             Ok(data) => verson_manifest = data,
             Err(e) => return Err(format!("Failed to download version manifest: {}", e))
         }
 
         // Download all libs needed by this version
-        let (_libs_dir, lib_paths) = match libs::download_version_libs(&verson_manifest).await {
+        match libs::download_version_libs(&verson_manifest, &paths).await {
             Ok((dir, paths)) => {
-                (dir.to_string(), paths)
+                let mut paths_string = String::new();
+
+                for path in paths.iter() {
+                    paths_string.push_str(&path);
+                }
+
+                self.info.insert("${libs_directory}".to_string(), dir.to_string());
+                self.info.insert("${classpath_libs_directories}".to_string(), paths_string);
             },
             Err(e) => return Err(format!("Failed to download version manifest: {}", e))
         };
 
         // Get version assets manifest
-        let (assets_manifest, asset_index) = match manifest::get_assets_manifest(&verson_manifest).await {
+        let assets_manifest_location = paths.assets.to_owned() + "/indexes";
+        let assets_manifest = match manifest::get_assets_manifest(&verson_manifest, &assets_manifest_location).await {
             Ok((data, id)) => {
-                (data, id.to_string())
+                self.info.insert("${assets_index_name}".to_string(), id.to_string());
+                data
             },
             Err(e) => return Err(format!("Failed to download assets manifest: {}", e))
         };
 
         // Download all assets needed by this version
-        let assets_dir = assets::download_version_assets(&assets_manifest).await;
+        let assets_objects_location = paths.assets.to_owned() + "/objects";
+        assets::download_version_assets(&assets_manifest, &assets_objects_location).await;
 
         // Initialize instance directory
-        match Self::init_instance_dir(&self.name).await {
-            Ok(_) => {},
-            Err(e) => return Err(format!("Failed to initialize instance directory: {}", e))
-        };
+        // match Self::init_instance_dir(&self.name, &paths).await {
+        //     Ok(_) => {},
+        //     Err(e) => return Err(format!("Failed to initialize instance directory: {}", e))
+        // };
 
-        let args = LaunchArgs {
-            username: String::from("Melicta"),
-            version: self.version.clone(),
-
-            game_dir: String::from("/home/quartix/.sonata/instances"),
-
-            assets_dir, 
-            asset_index,
-
-            uuid: String::from(""),
-            access_token: String::from(""),
-            client_id: String::from(""),
-            x_id: String::from(""),
-            user_type: String::from(""),
-            version_type: String::from("release"),
-
-            libs_dir: lib_paths,
-            main_class: String::from("net.minecraft.client.main.Main"),
-        };
-
-        launch::launch_instance(verson_manifest, args).await;
+        println!("asd");
+        launch::launch_instance(verson_manifest, &self.info).await;
 
         Ok(format!("asd"))
     }
 
-    async fn init_instance_dir(name: &String) -> Result<(), String> {
-        match create_dir_all(format!("/home/quartix/.sonata/instances/{}", name)).await {
+    async fn init_instance_dir(name: &String, paths: &Paths) -> Result<(), String> {
+        match create_dir_all(format!("{}/{}", paths.instance, name)).await {
             Ok(_) => {
                 println!("Created instance dir");
                 
-                let instances_list_file = std::fs::File::open("/home/quartix/.sonata/instances/instances_list.json").unwrap();
+                let instances_list_file = match std::fs::File::open("/home/quartix/.sonata/instances/instances_list.json") {
+                    Ok(file) => {
+                        println!("Instances list found");
+                        file
+                    },
+
+                    Err(e) => {
+                        if e.kind() == ErrorKind::NotFound {
+                            match File::create(format!("{}/instances/instances_list.json", paths.root)).await {
+                                Ok(_) => {
+                                    match std::fs::File::open(format!("{}/instances/instances_list.json", paths.root)) {
+                                        Ok(file) => file,
+                                        Err(e) => return Err(format!("Failed to create instances list file: {}", e)),
+                                    }
+                                },
+
+                                Err(e) => return Err(format!("Failed to create instances list file: {}", e))
+                            }
+                        } else {
+                            return Err(format!("Failed to open instances list file: {}", e));
+                        }
+                    }
+                };
+
                 let instances_list: serde_json::Value = serde_json::from_reader(&instances_list_file).unwrap();
 
                 if let Some(groups) = instances_list["groups"].as_object() {
@@ -129,5 +150,18 @@ impl Instance<'_> {
                 return Err(format!("Failed to create instance dir: {}", e));
             }
         }
+    }
+}
+
+// Returnes Libs path, Assets path, Instances path
+fn get_required_paths(instance_name: &String) -> Paths {
+    let root = "/home/quartix/.sonata";
+
+    Paths {
+        root: root.to_string(),
+        libs: format!("{}/libraries", root),
+        assets: format!("{}/assets", root),
+        instance: format!("{}/{}", root, instance_name),
+        meta: format!("{}/meta", root),
     }
 }

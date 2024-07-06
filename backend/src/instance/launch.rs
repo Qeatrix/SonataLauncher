@@ -1,75 +1,171 @@
-use std::fmt::format;
+use std::{arch::x86_64::_SIDD_MASKED_NEGATIVE_POLARITY, collections::HashMap, fmt::format};
 
 use async_std::process::Command;
+use serde::Deserialize;
 
-use crate::instance::LaunchArgs;
+use super::Instance;
 
-pub async fn launch_instance(manifest: serde_json::Value, mut args: LaunchArgs) {
-    // extract_launch_args(manifest);
-    let finished_args_array = define_launch_args(args).await;
+#[derive(Debug, Deserialize)]
+pub struct JVMArgs {
+    natives_dir: String,
+    launcher_name: String,
+    launcher_brand: String,
+}
 
-    let mut finished_args = String::new();
-    for arg in finished_args_array.iter() {
-        finished_args.push_str(&format!("{} ", arg));
-    }
-    println!("{}", finished_args);
+#[derive(Debug, Deserialize)]
+pub struct LaunchArgs {
+    username: String,
+    version: String,
+    game_dir: String,
+    assets_dir: String,
+    asset_index: String,
+    uuid: String,
+    access_token: String,
+    client_id: String,
+    xuid: String,
+    user_type: String,
+    version_type: String,
+    main_class: String,
 
-    let output = Command::new("/nix/store/2vwkssqpzykk37r996cafq7x63imf4sp-openjdk-21+35/bin/java").arg(finished_args).output().await.unwrap();
+    jvm_args: JVMArgs,
+}
+
+pub async fn launch_instance(manifest: serde_json::Value, info: &HashMap<String, String>) {
+    let args = define_launch_args(manifest, info).await;
+    println!("{:#?}", args);
+
+    // Command execution
+    let output = Command::new("java")
+        .args(args)
+        .output()
+        .await
+        .unwrap();
+
     println!("{:#?}", output);
 }
 
-async fn define_launch_args(mut args: LaunchArgs) -> Vec<String> {
-    let mut tmp_args = Vec::new();
+async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, String>) -> Vec<String> {
+    let mut tmp_args: Vec<String> = Vec::new();
 
-    // Java executable
-    let java_path = "java".to_string();
-    tmp_args.push(java_path);
+    println!("{:#?}", info);
 
+    let natives_dir = "/home/quartix/.sonata/instances/natives";
+
+    let mut jvm_args = vec![
+        "-XX:+UnlockExperimentalVMOptions".to_string(),
+        "-XX:+UseG1GC".to_string(),
+        "-XX:G1NewSizePercent=20".to_string(),
+        "-XX:G1ReservePercent=20".to_string(),
+        "-XX:MaxGCPauseMillis=50".to_string(),
+        "-XX:G1HeapRegionSize=32M".to_string(),
+        "-XX:+DisableExplicitGC".to_string(),
+        "-XX:+AlwaysPreTouch".to_string(),
+        "-XX:+ParallelRefProcEnabled".to_string(),
+        "-Xms512M".to_string(),
+        "-Xmx1024M".to_string(),
+        "-Dfile.encoding=UTF-8".to_string(),
+        "-Dlog4j.configurationFile=/home/quartix/.minecraft/assets/log_configs/patched-variant-2.0.xml".to_string(),
+        "-Dfml.ignoreInvalidMinecraftCertificates=true".to_string(),
+        "-Dfml.ignorePatchDiscrepancies=true".to_string(),
+        "-Djava.net.useSystemProxies=true".to_string(),
+    ];
+
+    // tmp_args.append(&mut jvm_args);
+
+    tmp_args.push("-Djava.library.path=".to_owned() + "/home/quartix/.minecraft/versions/1.7.4/natives/");
+    // tmp_args.push("-Djna.tmpdir=".to_owned() + natives_dir);
+    // tmp_args.push("-Dorg.lwjgl.system.SharedLibraryExtractPath=".to_owned() + natives_dir);
+    // tmp_args.push("-Dio.netty.native.workdir=/".to_owned() + natives_dir);
 
     tmp_args.push("-cp".to_string());
+    tmp_args.push(info.get("${classpath_libs_directories}").unwrap().to_string());
 
-    let mut solid_paths_str = String::new();
-    for path in args.libs_dir.iter() {
-        solid_paths_str.push_str(path);
+    if let Some(classpath) = manifest["mainClass"].as_str() {
+        tmp_args.push(classpath.to_string());
     }
-    tmp_args.push(solid_paths_str);
 
-    tmp_args.push(args.main_class);
+    if let Some(arguments) = manifest["arguments"].as_object() {
+        if let Some(game_args) = arguments["game"].as_array() {
 
-    tmp_args.push("--username".to_string());
-    tmp_args.push(args.username);
+            for arg in game_args {
+                if let Some(simple_arg) = arg.as_str() {
+                    if simple_arg[..2] == *"${" {
+                        let default = " ".to_string();
+                        let value = info.get(simple_arg).unwrap_or(&default);
+                        tmp_args.push(value.to_owned());
+                    } else {
+                        tmp_args.push(simple_arg.to_string());
+                    }
+                } else if let Some(complex_arg) = arg.as_object() {
+                    // println!("Complex arg: {:#?}", complex_arg);
+                }
+            }
+        }
 
-    tmp_args.push("--version".to_string());
-    tmp_args.push(args.version);
+    } else if let Some(arguments) = manifest["minecraftArguments"].as_str() {
+        println!("Using legacy manifest extraction pattern...");
+        let arguments = arguments.split_whitespace();
 
-    tmp_args.push("--gameDir".to_string());
-    tmp_args.push(args.game_dir);
-
-    tmp_args.push("--assetsDir".to_string());
-    tmp_args.push(args.assets_dir);
-
-    tmp_args.push("--assetIndex".to_string());
-    tmp_args.push(args.asset_index);
-
-    tmp_args.push("--uuid".to_string());
-    tmp_args.push(args.uuid);
-
-    tmp_args.push("--accessToken".to_string());
-    tmp_args.push(args.access_token);
-
-    tmp_args.push("--clientId".to_string());
-    tmp_args.push(args.client_id);
-
-    tmp_args.push("xId".to_string());
-    tmp_args.push(args.x_id);
-
-    tmp_args.push("userType".to_string());
-    tmp_args.push(args.user_type);
-
-    tmp_args.push("-versionType".to_string());
-    tmp_args.push(args.version_type);
+        for arg in arguments {
+            if &arg[..2] == "${" {
+                let default = " ".to_string();
+                let value = info.get(arg).unwrap_or(&default);
+                tmp_args.push(value.to_owned());
+            } else {
+                tmp_args.push(arg.to_string());
+            }
+        }
+    }
 
     tmp_args
+
+    // Java executable
+    // let java_path = "java".to_string();
+
+    // tmp_args.push("-cp".to_string());
+
+    // let mut solid_paths_str = String::new();
+    // for path in args.libs_dir.iter() {
+    //     solid_paths_str.push_str(path);
+    // }
+    // tmp_args.push(solid_paths_str);
+
+    // tmp_args.push(args.main_class);
+
+    // tmp_args.push("--username".to_string());
+    // tmp_args.push(args.username);
+
+    // tmp_args.push("--version".to_string());
+    // tmp_args.push(args.version);
+
+    // tmp_args.push("--gameDir".to_string());
+    // tmp_args.push(args.game_dir);
+
+    // tmp_args.push("--assetsDir".to_string());
+    // tmp_args.push(args.assets_dir);
+
+    // tmp_args.push("--assetIndex".to_string());
+    // tmp_args.push(args.asset_index);
+
+    // tmp_args.push("--uuid".to_string());
+    // tmp_args.push(args.uuid);
+
+    // tmp_args.push("--accessToken".to_string());
+    // tmp_args.push(args.access_token);
+
+    // tmp_args.push("--clientId".to_string());
+    // tmp_args.push(args.client_id);
+
+    // tmp_args.push("xId".to_string());
+    // tmp_args.push(args.x_id);
+
+    // tmp_args.push("userType".to_string());
+    // tmp_args.push(args.user_type);
+
+    // tmp_args.push("-versionType".to_string());
+    // tmp_args.push(args.version_type);
+
+    // tmp_args
 }
 
 fn extract_launch_args<'a>(manifest: serde_json::Value) -> Vec<(&'a str, &'a str)> {

@@ -1,0 +1,48 @@
+@import "../globalcss/styles.module.less";
+@import "../globalcss/anims.module.less";
+@import "../globalcss/vars/vars.module.less";
+@import "../globalcss/vars/buttons.module.less";
+
+.button {
+    align-items: center;
+    padding: 9px 17px;
+
+    outline: none;
+    border: none;
+    box-sizing: border-box;
+    border-radius: 14px;
+    /* background: paint(squircle);
+	--squircle-radius: 8px;
+    --squircle-smooth: 0.3;
+	--squircle-fill: #EBEBEB; */
+    font-size: 16px;
+    line-height: 19px;
+
+    transition: scale @btn-scale-duration @anim-cb1,
+        background-color @btn-shadow-duration @anim-cb1,
+        filter @btn-shadow-duration @anim-cb1;
+
+    &:active {
+        scale: 0.9;
+    }
+
+    &.primary {
+        background-color: @btn-primary-bg;
+        color: @btn-primary-text;
+        filter: @btn-primary-shadow;
+
+        /* --squircle-fill: #007AFF; */
+
+        &:active {
+            background-color: @btn-primary-bg-active;
+        }
+
+        &:hover {
+            filter: @btn-primary-shadow-hover;
+        }
+    }
+
+    &:focus-visible {
+        .anim-focus;
+    }
+}
