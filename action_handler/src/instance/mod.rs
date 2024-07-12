@@ -7,9 +7,15 @@ use async_std::fs::File;
 use download::libs;
 use download::assets;
 use download::manifest;
+use serde_json::json;
+use tide_websockets::WebSocketConnection;
 
 pub mod launch;
 
+use crate::types::ws;
+use crate::types::ws::send_ws_msg;
+use crate::types::ws::InfoMessage;
+use crate::types::ws::ProgressData;
 
 pub struct Paths {
     root: String,
@@ -34,13 +40,25 @@ impl Instance {
         }
     }
 
-    pub async fn init(&mut self) -> Result<String, String> {
-
+    pub async fn init(&mut self, ws: &WebSocketConnection) -> Result<String, String> {
         // Get default paths
         let paths = get_required_paths(&self.name);
 
         match create_dir_all(&paths.root).await {
-            Ok(_) => println!("Launcher root directory initialized"),
+            Ok(_) => {
+                println!("Launcher root directory initialized");
+
+                let msg = InfoMessage {
+                    message: format!("Root directory initialized successfully"),
+                    message_id: format!("creation_root_success"),
+                    timestamp: format!("Current Date"),
+                };
+
+                if let Err(e) = send_ws_msg(ws, json!(msg)).await {
+                    println!("Error occured: {}", e);
+                    return Err(e);
+                }
+            },
             Err(e) => {
                 return Err(format!("{}", e));
             },
@@ -53,12 +71,24 @@ impl Instance {
         // Get minecraft version manifest
         let verson_manifest: serde_json::Value;
         match manifest::download_manifest(&self.url, &paths.meta).await {
-            Ok(data) => verson_manifest = data,
+            Ok(data) => {
+                let msg = InfoMessage {
+                    message: format!("Manifest downloaded successfully"),
+                    message_id: format!("download_manifest_success"),
+                    timestamp: format!("Current Date"),
+                };
+
+                if let Err(e) = send_ws_msg(ws, json!(msg)).await {
+                    return Err(e);
+                }
+
+                verson_manifest = data
+            },
             Err(e) => return Err(format!("Failed to download version manifest: {}", e))
         }
 
         // Download all libs needed by this version
-        match libs::download_version_libs(&verson_manifest, &paths).await {
+        match libs::download_version_libs(&verson_manifest, &paths, &ws).await {
             Ok((dir, paths)) => {
                 let mut paths_string = String::new();
 
@@ -69,8 +99,10 @@ impl Instance {
                 self.info.insert("${libs_directory}".to_string(), dir.to_string());
                 self.info.insert("${classpath_libs_directories}".to_string(), paths_string);
             },
-            Err(e) => return Err(format!("Failed to download version manifest: {}", e))
+            Err(e) => return Err(format!("Failed to download and register libs: {e}"))
         };
+
+        println!("Libs downloaded");
 
         // Get version assets manifest
         let assets_manifest_location = paths.assets.to_owned() + "/indexes";
@@ -84,7 +116,7 @@ impl Instance {
 
         // Download all assets needed by this version
         let assets_objects_location = paths.assets.to_owned() + "/objects";
-        assets::download_version_assets(&assets_manifest, &assets_objects_location).await;
+        assets::download_version_assets(&assets_manifest, &assets_objects_location, ws).await;
 
         // Initialize instance directory
         // match Self::init_instance_dir(&self.name, &paths).await {
@@ -138,7 +170,7 @@ impl Instance {
                         }
 
                     } else {
-                        println!("")
+                        println!("");
                     }
                 } else {
                     println!("Not found");

@@ -30,6 +30,18 @@ const Instances = () => {
     const selectedVersionNumber = ref<number>(0);
 
 
+    const ws = new WebSocket('ws://127.0.0.1:8080/ws/instance/create');
+
+    ws.onopen = () => {
+        console.log('WebSocket connection established');
+    };
+
+    ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        console.log(msg);
+    };
+
+
     setTimeout(() => {
         versionsManifest.val = Store.getGlobalManifestData() as unknown as VersionsManifest;
         console.log("Manifest loaded");
@@ -73,9 +85,17 @@ const Instances = () => {
             infoObject[key] = value;
         });
         
-        Api.requestVersionDownload("asd", selectedVersion.val.url, infoObject)
-            .then(json => { console.log(json) })
-            .catch(err => { console.log(err) })
+        // Api.requestVersionDownload("asd", selectedVersion.val.url, infoObject)
+        //     .then(json => { console.log(json) })
+        //     .catch(err => { console.log(err) })
+
+        let body = JSON.stringify({
+            name: "asd",
+            url: selectedVersion.val.url,
+            info: infoObject
+        })
+
+        ws.send(body);
     }
 
     const handleVersionChange = async (version: Version, key: number) => {
@@ -93,17 +113,15 @@ const Instances = () => {
             <br /><br />
             <input type="text" id="instance-name" />
             <div class={css.selectionArea}>
-                <SelectionArea name="Versions">
-                    <>
-                        {versionsManifest.derive(val => val?.versions.map((version, key) => (
-                            <SelectionItem
-                                onClick={() => handleVersionChange(version, key)}
-                                name={version.id}
-                            >
-                            </SelectionItem>
-                        )))}
-                    </>
-                </SelectionArea>
+                {versionsManifest.derive(val => val?.versions.map((version, key) => (
+                    <button
+                        class={selectedVersionNumber.derive(val => `${css.button} ${val === key ? css.selectedButton : ''}`)}
+                        key={key}
+                        onClick={(e: PointerEvent) => handleVersionChange(version, key)}
+                    >
+                        {version.id}
+                    </button>
+                )))}
             </div>
             <button onClick={requestVersionDownload}>Continue</button>
         </>

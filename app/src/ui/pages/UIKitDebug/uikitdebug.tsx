@@ -4,7 +4,7 @@ import Store from '@/data/store';
 import Button from '@/ui/components/buttons/buttons';
 import Input from '@/ui/components/input/input';
 import { SelectionArea, SelectionItem } from '@/ui/components/selectionArea/selectionArea';
-import { FlexBox, Window, WindowControls } from '@/ui/components/window/window';
+import { ContentStack, FlexBox, Window, WindowControls } from '@/ui/components/window/window';
 import { VersionsManifest, Version } from '@/data/types';
 import { For } from 'hywer/x/html';
 
@@ -41,6 +41,8 @@ function page() {
             }
     ];
 
+    const contentStackIndex = ref<number>(0);
+
 
     setTimeout(() => {
         versionsManifest.val = Store.getGlobalManifestData() as unknown as VersionsManifest;
@@ -67,7 +69,7 @@ function page() {
         //selectedVersion.val = version;
         //Store.setVersionManifestData(version.id, version);
         selectedVersionId.val = id;
-        console.log(123);
+        console.log(selectedVersionId.val);
     }
 
     console.log(versionsManifest.val);
@@ -80,61 +82,96 @@ function page() {
         selectedLoaderNumber.val = key;
     }
 
+    const previousWindow = () => {
+        contentStackIndex.val--;
+    }
+
+    const nextWindow = () => {
+        contentStackIndex.val++;
+    }
+
     return (
         <>
             <p>asdasd</p>
             <button onClick={getVersionsManifest}>get versions</button>
             <Window name="Instance Creation">
-                <FlexBox>
-                    <Input name="Name" />
-                    <>
-                        <div></div>
-                    </>
-                </FlexBox>
-                <FlexBox>
-                    <Input name="Tags" />
-                    <>
-                        <div></div>
-                    </>
-                </FlexBox>
-                <FlexBox>
-                    <SelectionArea name="Versions">
-                        <>
-                            {/* {versionsManifest.derive(val => val?.versions.map((version, key) => (
-                                <SelectionItem
-                                    name={version.id}
-                                    onClick={() => handleVersionChange(version, key)}
-                                    className={selectedVersionNumber.derive(val => `${val === key ? 'selected' : ''}`)}
-                                />
-                            )))} */}
-                            {versionsManifest.derive(val => {
-                                return <For in={val.versions}>
-                                    {(item, i) => {
-                                        return <SelectionItem
-                                            name={item.id}
-                                            onClick={() => handleVersionChange(item.id)}
-                                            selected={selectedVersionId.derive(val => val == item.id)}
-                                        />
-                                    }}
-                                </For>
-                            })}
-                        </>
-                    </SelectionArea>
-                    <SelectionArea name="Loader">
-                        <>
-                            {Loaders.map((loader, key) => (
-                                <SelectionItem
-                                    name={loader.name}
-                                    onClick={() => handleLoaderChange(key)}
-                                    selected={selectedVersionId.derive(val => val == loader.name)}
-                                />
-                            ))}
-                        </>
-                    </SelectionArea>
-                </FlexBox>
+                <ContentStack showIndex={contentStackIndex}>
+                    <div>
+                        <FlexBox>
+                            <Input id="name" name="Name" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                        <FlexBox>
+                            <Input id="tags" name="Tags" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                        <FlexBox>
+                            <SelectionArea selectedValue={selectedVersionId} onValueChange={handleVersionChange} name="Versions" searchBar={true}>
+                                <div>
+                                    {versionsManifest.derive(val => {
+                                        return <For in={val.versions}>
+                                            {(item, i) => {
+                                                return <SelectionItem
+                                                    name={item.id}
+                                                    onClick={() => handleVersionChange(item.id)}
+                                                    selected={selectedVersionId.derive(val => val == item.id)}
+                                                />
+                                            }}
+                                        </For>
+                                    })}
+                                </div>
+                            </SelectionArea>
+                            <SelectionArea selectedValue={selectedVersionId} onValueChange={handleVersionChange} name="Loader">
+                                <div>
+                                    <For in={Loaders}>
+                                        {(loader, i) => {
+                                            return <SelectionItem
+                                                name={loader.name}
+                                                onClick={() => handleLoaderChange(i)}
+                                                selected={selectedLoaderNumber.derive(val => val == i)}
+                                            />
+                                        }}
+                                    </For>
+                                </div>
+                            </SelectionArea>
+                        </FlexBox>
+                    </div>
+                    <div>
+                        <FlexBox>
+                            <Input id="name" name="Name" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                        <FlexBox>
+                            <Input id="tags" name="Tags" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                    </div>
+                    <div>
+                        <FlexBox>
+                            <Input id="asd123" name="Name" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                        <FlexBox>
+                            <Input id="dkfjgh" name="Tags" />
+                            <>
+                                <div></div>
+                            </>
+                        </FlexBox>
+                    </div>
+                </ContentStack>
                 <WindowControls>
-                    <Button text="Cancel" />
-                    <Button text="Continue" primary={true} />
+                    <Button text="Cancel" onClick={previousWindow} />
+                    <Button text="Continue" primary={true} onClick={nextWindow} />
                 </WindowControls>
             </Window>
         </>
