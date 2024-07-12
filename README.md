@@ -15,7 +15,7 @@ cd app && npm run build
 
 Build ActionHandler
 ```
-cd backend && cargo run build
+cd action_handler && cargo run build
 ```
 
 ## Application Architecture
