@@ -1,5 +1,5 @@
 # Sonata Launcher
-The next generation Minecaft launcher
+The next generation Minecraft Launcher
 ## The project is under heavy development
 ### Build the project
 
