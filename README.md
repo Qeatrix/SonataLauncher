@@ -18,7 +18,7 @@ Build ActionHandler
 cd action_handler && cargo run build
 ```
 
-## Project ToDo
+## Project Todo
 #### Action Handler
 - [ ] Implement **natives** folder handling
 - [ ] Separate endpoint for instance launching
