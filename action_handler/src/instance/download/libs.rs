@@ -9,7 +9,7 @@ use serde_json::{self, json};
 use tide_websockets::WebSocketConnection;
 
 use crate::instance::Paths;
-use crate::types::ws::{send_ws_msg, ProgressData, ProgressMessage, ProgressTarget};
+use crate::types::ws::{send_ws_msg, InfoMessage, ProgressData, ProgressMessage, ProgressTarget};
 use crate::utils::metacache;
 
 pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Paths, ws: &WebSocketConnection) -> Result<(&'a str, Vec<String>), String> {
@@ -19,7 +19,16 @@ pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Pat
     };
 
     println!("Download Finished");
-    // ws.send_string(format!("Libraries downloaded")).await;
+    let msg = InfoMessage {
+        message: format!("Libraries Downloaded"),
+        message_id: format!("download_libraries_complete"),
+        timestamp: format!("Current Date"),
+    };
+
+    if let Err(e) = send_ws_msg(ws, json!(msg)).await {
+        println!("Failed to send update info, {e}");
+    }
+
     Ok(("/home/quartix/.sonata/libraries/", paths))
 }
 
@@ -203,7 +212,7 @@ async fn process_futures
                 message_id: format!("download_item_complete"),
                 timestamp: format!("Current Date"),
                 data: ProgressData {
-                    stage: "Downloading".to_string(),
+                    stage: "downloading".to_string(),
                     determinable: true,
                     progress: Some(downloaded_libraries.len()),
                     max,
