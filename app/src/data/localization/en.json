@@ -1,0 +1,10 @@
+{
+    "fetch_manifest": "Fetch Manifest",
+    "download_libs": "Download Libraries",
+    "download_assets": "Download Assets",
+    "inprogress": {
+        "fetch_manifest": "Fetching Manifest",
+        "download_libs": "Downloading Libraries",
+        "download_assets": "Downloading Assets"
+    }
+}

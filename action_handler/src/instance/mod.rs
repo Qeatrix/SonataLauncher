@@ -12,10 +12,12 @@ use tide_websockets::WebSocketConnection;
 
 pub mod launch;
 
-use crate::types::ws;
 use crate::types::ws::send_ws_msg;
 use crate::types::ws::InfoMessage;
 use crate::types::ws::ProgressData;
+use crate::types::ws::ProgressMessage;
+use crate::types::ws::ProgressTarget;
+use crate::types::ws::ProgressTargetsList;
 
 pub struct Paths {
     root: String,
@@ -51,6 +53,7 @@ impl Instance {
                 let msg = InfoMessage {
                     message: format!("Root directory initialized successfully"),
                     message_id: format!("creation_root_success"),
+                    message_type: format!("INFO"),
                     timestamp: format!("Current Date"),
                 };
 
@@ -68,14 +71,45 @@ impl Instance {
         self.info.entry("${assets_root}".to_string()).or_insert_with(|| paths.assets.to_string());
         self.info.entry("${user_properties}".to_string()).or_insert_with(|| "{}".to_string());
 
+        // Send stages list
+        let mut list: Vec<String> = Vec::new();
+        list.push("fetch_manifest".to_string());
+        list.push("download_libs".to_string());
+        list.push("download_assets".to_string());
+
+        let msg = ProgressTargetsList {
+            message_id: format!("progress_targets_list_transfer"),
+            message_type: format!("PROGRESS_TARGETS_LIST"),
+            timestamp: format!("Current Date"),
+            ids_list: list,
+        };
+
+        if let Err(e) = send_ws_msg(ws, json!(msg)).await {
+            println!("Error occured: {}", e);
+            return Err(e);
+        }
+
+
         // Get minecraft version manifest
         let verson_manifest: serde_json::Value;
         match manifest::download_manifest(&self.url, &paths.meta).await {
             Ok(data) => {
-                let msg = InfoMessage {
-                    message: format!("Manifest downloaded successfully"),
-                    message_id: format!("download_manifest_success"),
+                let msg = ProgressMessage {
+                    message_id: format!("stage_complete"),
                     timestamp: format!("Current Date"),
+                    data: ProgressData {
+                        stage: "fetch_manifest".to_string(),
+                        determinable: false,
+                        progress: None,
+                        max: 0,
+                        status: "COMPLETED".to_string(),
+                        target_type: "".to_string(),
+                        target: ProgressTarget::File {
+                            status: "".to_string(),
+                            name: "".to_string(),
+                            size_bytes: 0,
+                        },
+                    },
                 };
 
                 if let Err(e) = send_ws_msg(ws, json!(msg)).await {
@@ -125,12 +159,12 @@ impl Instance {
         // };
 
         println!("asd");
-        launch::launch_instance(verson_manifest, &self.info).await;
+        // launch::launch_instance(verson_manifest, &self.info).await;
 
         Ok(format!("asd"))
     }
 
-    async fn init_instance_dir(name: &String, paths: &Paths) -> Result<(), String> {
+    async fn _init_instance_dir(name: &String, paths: &Paths) -> Result<(), String> {
         match create_dir_all(format!("{}/{}", paths.instance, name)).await {
             Ok(_) => {
                 println!("Created instance dir");

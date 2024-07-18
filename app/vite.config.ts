@@ -19,6 +19,15 @@ export default defineConfig({
       "#root": resolve(__dirname)
     }
   },
+  css: {
+    preprocessorOptions: {
+      less: {
+        paths: [
+          path.resolve(__dirname, "src"),
+        ]
+      },
+    },
+  },
   plugins: [
     electron({
       main: {

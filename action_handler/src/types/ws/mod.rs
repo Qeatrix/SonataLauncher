@@ -15,6 +15,7 @@ pub async fn send_ws_msg(ws: &WebSocketConnection, msg: serde_json::Value) -> Re
 pub struct InfoMessage {
     pub message: String,
     pub message_id: String,
+    pub message_type: String,
     pub timestamp: String,
 }
 
@@ -24,6 +25,7 @@ pub struct InfoMessage {
 pub struct ErrorMessage {
     pub message: String,
     pub message_id: String,
+    pub message_type: String,
     pub timestamp: String,
     pub details: ErrorDetails,
 }
@@ -50,6 +52,7 @@ pub struct ProgressData {
     pub progress: Option<usize>,
     pub max: usize,
     pub status: String,
+    pub target_type: String,
     pub target: ProgressTarget,
 }
 
@@ -57,11 +60,34 @@ pub struct ProgressData {
 #[serde(tag = "type")]
 pub enum ProgressTarget {
     File {
+        status: String,
         name: String,
         size_bytes: u64,
     },
     Dir {
+        status: String,
         path: String,
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProgressTargetsList {
+    pub message_id: String,
+    pub message_type: String,
+    pub timestamp: String,
+    pub ids_list: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProgressFinishMessage {
+    pub message_id: String,
+    pub message_type: String,
+    pub timestamp: String,
+    pub data: ProgressFinishData,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProgressFinishData {
+    pub stage: String,
+    pub status: String,
+}

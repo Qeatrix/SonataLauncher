@@ -1,4 +1,4 @@
-import { JSX, Reactive, derive, ref } from 'hywer/jsx-runtime';
+import { JSX, Reactive, derive, effect, ref } from 'hywer/jsx-runtime';
 import css from './window.module.less';
 import { For } from 'hywer/x/html';
 import { gsap, ScrollToPlugin } from 'gsap/all';
@@ -77,16 +77,20 @@ export function ContentStack(props: IContentStack) {
         console.log(`key: ${i} | value: ${props.showIndex.val} | ${props.showIndex.derive(val => val === i)}`);
     }
 
+    effect(() => {
+        WindowContentWidth();
+    }, [])
+
     const WindowContentWidth = () => {
         const animContent = document.getElementById('WindowContent');
         let scrollValue: any = "max";
 
-        console.log(animContent?.children);
+        // console.log(animContent?.children);
 
         if (props.showIndex.oldVal < props.showIndex.val) {
-            console.log("Going forward");
+            // console.log("Going forward");
         } else if (props.showIndex.oldVal > props.showIndex.val) {
-            console.log("Going previous");
+            // console.log("Going previous");
             scrollValue = 0;
 
             if (animContent) {
@@ -131,7 +135,7 @@ export function ContentStack(props: IContentStack) {
                         handleChange();
 
                         return <>
-                            <For in={props.children[0]}>
+                            <For in={props.children}>
                                 {(item, i) => {
                                     return <>
                                         {

@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::OpenOptions;
-use std::sync::Arc;
-use async_std::{path, print, task};
+use async_std::task;
 use async_std::{fs::{create_dir_all, File}, io::WriteExt};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -9,7 +8,7 @@ use serde_json::{self, json};
 use tide_websockets::WebSocketConnection;
 
 use crate::instance::Paths;
-use crate::types::ws::{send_ws_msg, InfoMessage, ProgressData, ProgressMessage, ProgressTarget};
+use crate::types::ws::{send_ws_msg, ProgressData, ProgressFinishData, ProgressFinishMessage, ProgressMessage, ProgressTarget};
 use crate::utils::metacache;
 
 pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Paths, ws: &WebSocketConnection) -> Result<(&'a str, Vec<String>), String> {
@@ -19,10 +18,33 @@ pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Pat
     };
 
     println!("Download Finished");
-    let msg = InfoMessage {
-        message: format!("Libraries Downloaded"),
-        message_id: format!("download_libraries_complete"),
+
+    // let msg = ProgressFinishMessage {
+    //     message_id: format!("stage_complete"),
+    //     message_type: "PROGRESS_FINISH".to_string(),
+    //     timestamp: format!("Current Date"),
+    //     data: ProgressFinishData {
+    //         stage: "download_libs".to_string(),
+    //         status: "COMPLETED".to_string(),
+    //     },
+    // };
+
+    let msg = ProgressMessage {
+        message_id: format!("stage_complete"),
         timestamp: format!("Current Date"),
+        data: ProgressData {
+            stage: "download_libs".to_string(),
+            determinable: false,
+            progress: None,
+            max: 0,
+            status: "COMPLETED".to_string(),
+            target_type: "".to_string(),
+            target: ProgressTarget::File {
+                status: "".to_string(),
+                name: "".to_string(),
+                size_bytes: 0,
+            },
+        },
     };
 
     if let Err(e) = send_ws_msg(ws, json!(msg)).await {
@@ -212,12 +234,14 @@ async fn process_futures
                 message_id: format!("download_item_complete"),
                 timestamp: format!("Current Date"),
                 data: ProgressData {
-                    stage: "downloading".to_string(),
+                    stage: "download_libs".to_string(),
                     determinable: true,
                     progress: Some(downloaded_libraries.len()),
                     max,
-                    status: "Downloaded".to_string(),
+                    status: "INPROGRESS".to_string(),
+                    target_type: "FILE".to_string(),
                     target: ProgressTarget::File {
+                        status: "DOWNLOADED".to_string(),
                         name: asset_info.name.to_string(),
                         size_bytes: 0,
                     },

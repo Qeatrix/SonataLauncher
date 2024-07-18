@@ -1,6 +1,6 @@
 use std::{collections::HashSet, io::Write};
 use async_std::{
-    fs::{create_dir_all, File}, io::WriteExt, process, task
+    fs::{create_dir_all, File}, io::WriteExt, task
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use serde_json::json;
@@ -15,6 +15,38 @@ pub async fn download_version_assets<'a>(manifest: &serde_json::Value, assets_pa
     extract_manifest_assets(manifest, assets_path, ws).await;
     println!("Asset extraction completed");
     // ws.send_string(format!("Assets downloaded")).await;
+
+    // let msg = ProgressFinishMessage {
+    //     message_id: format!("stage_complete"),
+    //     message_type: "PROGRESS_FINISH".to_string(),
+    //     timestamp: format!("Current Date"),
+    //     data: ProgressFinishData {
+    //         stage: "download_assets".to_string(),
+    //         status: "COMPLETED".to_string(),
+    //     },
+    // };
+
+    let msg = ProgressMessage {
+        message_id: format!("stage_complete"),
+        timestamp: format!("Current Date"),
+        data: ProgressData {
+            stage: "download_assets".to_string(),
+            determinable: false,
+            progress: None,
+            max: 0,
+            status: "COMPLETED".to_string(),
+            target_type: "".to_string(),
+            target: ProgressTarget::File {
+                status: "".to_string(),
+                name: "".to_string(),
+                size_bytes: 0,
+            },
+        },
+    };
+
+    if let Err(e) = send_ws_msg(ws, json!(msg)).await {
+        println!("Failed to send update info, {e}");
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Hash)]
@@ -92,12 +124,14 @@ async fn process_futures
                 message_id: format!("download_item_complete"),
                 timestamp: format!("Current Date"),
                 data: ProgressData {
-                    stage: "Downloading".to_string(),
+                    stage: "download_assets".to_string(),
                     determinable: true,
                     progress: Some(downloaded_assets.len()),
                     max,
-                    status: "Downloaded".to_string(),
+                    status: "INPROGRESS".to_string(),
+                    target_type: "FILE".to_string(),
                     target: ProgressTarget::File {
+                        status: "DOWNLOADED".to_string(),
                         name: asset_info.name.to_string(),
                         size_bytes: 0,
                     },

@@ -5,7 +5,8 @@ import Button from '@/ui/components/buttons/buttons';
 import Input from '@/ui/components/input/input';
 import { SelectionArea, SelectionItem } from '@/ui/components/selectionArea/selectionArea';
 import { ContentStack, FlexBox, Window, WindowControls } from '@/ui/components/window/window';
-import { VersionsManifest, Version } from '@/data/types';
+import { ProgressDisplay, ProgressItem } from '@/ui/widgets/progressDisplay/ProgressDisplay';
+import { VersionsManifest, Version, ProgressMessage, ProgressTargetsList } from '@/data/types';
 import { For } from 'hywer/x/html';
 
 function page() {
@@ -29,8 +30,6 @@ function page() {
         url: ''
     });
 
-    const selectedVersionNumber = ref<string>("");
-
     const selectedLoaderNumber = ref(0);
     const Loaders = [
             {
@@ -42,6 +41,12 @@ function page() {
     ];
 
     const contentStackIndex = ref<number>(0);
+
+    const progressItems = ref<ProgressTargetsList>({
+        message_id: '',
+        timestamp: '',
+        ids_list: []
+    });
 
 
     setTimeout(() => {
@@ -141,18 +146,20 @@ function page() {
                         </FlexBox>
                     </div>
                     <div>
-                        <FlexBox>
-                            <Input id="name" name="Name" />
-                            <>
-                                <div></div>
-                            </>
-                        </FlexBox>
-                        <FlexBox>
-                            <Input id="tags" name="Tags" />
-                            <>
-                                <div></div>
-                            </>
-                        </FlexBox>
+                        <ProgressDisplay>
+                            <div>
+                                {progressItems.derive(val => {
+                                    return <For in={val.ids_list}>
+                                        {(stage) => {
+                                            if (stage) {
+                                                console.log("STAGEE!!!!");
+                                                return <ProgressItem name={stage} />
+                                            }
+                                        }}
+                                    </For>
+                                })}
+                            </div>
+                        </ProgressDisplay>
                     </div>
                     <div>
                         <FlexBox>

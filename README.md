@@ -20,6 +20,7 @@ cd action_handler && cargo run build
 
 ## Project Todo
 #### Action Handler
+- [ ] Refactor WebSocket messages types
 - [ ] Implement **natives** folder handling
 - [ ] Separate endpoint for instance launching
 - [ ] Code refactoring in `instance/mod.rs`
@@ -28,12 +29,14 @@ cd action_handler && cargo run build
 - [ ] Endpoint for sending required authenticated account
 	- [ ] Storing authenticated accounts
 #### Frontend
+- [ ] Refactor WebSocket messages types
 - [ ] Instance download manager with WebSockets integration
 - [ ] Tasks widget on headerbar
 	- [ ] Storage of minimized windows
 - [ ] Retrieving installed instances
 	- [ ] Reusable grid display component
 - [ ] Account authentication
+- [ ] Refactor localization store
 
 ## Application Architecture
 ![Application Architecture Map](./Application%20Architecture.png)

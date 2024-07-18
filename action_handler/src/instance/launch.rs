@@ -1,11 +1,9 @@
-use std::{arch::x86_64::_SIDD_MASKED_NEGATIVE_POLARITY, collections::HashMap, fmt::format};
+use std::collections::HashMap;
 
 use async_std::process::Command;
-use serde::Deserialize;
+/* use serde::Deserialize; */
 
-use super::Instance;
-
-#[derive(Debug, Deserialize)]
+/* #[derive(Debug, Deserialize)]
 pub struct JVMArgs {
     natives_dir: String,
     launcher_name: String,
@@ -28,7 +26,7 @@ pub struct LaunchArgs {
     main_class: String,
 
     jvm_args: JVMArgs,
-}
+} */
 
 pub async fn launch_instance(manifest: serde_json::Value, info: &HashMap<String, String>) {
     let args = define_launch_args(manifest, info).await;
@@ -49,7 +47,7 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
 
     println!("{:#?}", info);
 
-    let natives_dir = "/home/quartix/.sonata/instances/natives";
+/*     let natives_dir = "/home/quartix/.sonata/instances/natives";
 
     let mut jvm_args = vec![
         "-XX:+UnlockExperimentalVMOptions".to_string(),
@@ -68,7 +66,7 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
         "-Dfml.ignoreInvalidMinecraftCertificates=true".to_string(),
         "-Dfml.ignorePatchDiscrepancies=true".to_string(),
         "-Djava.net.useSystemProxies=true".to_string(),
-    ];
+    ]; */
 
     // tmp_args.append(&mut jvm_args);
 
@@ -96,7 +94,7 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
                     } else {
                         tmp_args.push(simple_arg.to_string());
                     }
-                } else if let Some(complex_arg) = arg.as_object() {
+                } else if let Some(_complex_arg) = arg.as_object() {
                     // println!("Complex arg: {:#?}", complex_arg);
                 }
             }
@@ -168,7 +166,7 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
     // tmp_args
 }
 
-fn extract_launch_args<'a>(manifest: serde_json::Value) -> Vec<(&'a str, &'a str)> {
+fn _extract_launch_args<'a>(manifest: serde_json::Value) -> Vec<(&'a str, &'a str)> {
     if let Some(arguments) = manifest["arguments"]["game"].as_array() {
         for argument in arguments {
             println!("{}", argument);

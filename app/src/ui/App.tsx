@@ -12,8 +12,8 @@ const App = () => {
   createRouterContext(routes)
 
   return <>
-   <Header />
-   <Router />
+    <Header />
+    <Router />
   </>
 }
 

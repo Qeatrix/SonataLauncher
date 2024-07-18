@@ -13,12 +13,11 @@ interface ISelectionArea {
     customEvent?: () => void,
     searchBar?: boolean,
 
-    onValueChange: (value: string) => any
+    onValueChange: (value: string, url: string) => any
     selectedValue: Reactive<string>
 }
 
 export function SelectionArea(props: ISelectionArea) {
-
     const searchQuery = ref("")
 
     const onInputQuery = (e: InputEvent) =>  {
@@ -72,6 +71,7 @@ export function SelectionItem(props: ISelectionItem) {
         props.selected?.derive(val => console.log(val));
         e();
     }
+
     return (
         <button 
             className={props.selected?.derive(val => val == true ? css.SelectedButton : "")}

@@ -8,7 +8,7 @@ import { VersionsManifest } from "@/data/types";
 
 interface SearchProps {
     query: string
-    onSelect: (id: string) => any;
+    onSelect: (id: string, url: string) => any;
     selectedValue: Reactive<string>
 }
 
@@ -35,7 +35,7 @@ export default function Search({query, onSelect, selectedValue}: SearchProps) {
                 return <div>
                     <SelectionItem
                         name={item.id}
-                        onClick={() => onSelect(item.id)}
+                        onClick={() => onSelect(item.id, item.url)}
                         selected={selectedValue.derive(val => val == item.id)}
                     />
                 </div>
