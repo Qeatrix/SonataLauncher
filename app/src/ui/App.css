@@ -1,13 +1,12 @@
 /* Text */
 @font-face {
     font-family: "Regular";
-    font-optical-sizing: auto;
+    font-optical-sizing: none;
     font-weight: 400;
     font-style: normal;
     font-variation-settings:
     "slnt" 0;
-    src: local('Inter'),
-         url('../assets/fonts/Inter-Regular.ttf') format('truetype'),
+    src: url('../assets/fonts/Inter_variable.ttf') format('truetype'),
 }
 
 @font-face {
@@ -17,8 +16,7 @@
     font-style: normal;
     font-variation-settings:
     "slnt" 0;
-    src: local('Inter-Medium'),
-         url('../assets/fonts/Inter-Medium.ttf') format('truetype'),
+    src: url('../assets/fonts/Inter-Medium.ttf') format('truetype'),
 }
 
 @font-face {

@@ -7,6 +7,7 @@ import localization from '@/data/localization/en.json';
 import { For, Svg } from "hywer/x/html";
 import Store from "@/data/store";
 import { gsap } from 'gsap/all';
+import DoneIcon from './assets/Done';
 
 
 interface IProgressDisplay {
@@ -16,88 +17,138 @@ interface IProgressDisplay {
 }
 
 export function ProgressDisplay(props: IProgressDisplay) {
-    const activeObject = ref<HTMLElement | null>(null);
     const componentId = Store.makeId(6);
     const currentWorkId = ref<number | null>(null);
-    const completedElements = ref<number[]>([]);
+    const completedElements = ref<HTMLElement[]>([]);
 
     props.message.sub = (val) => {
         // Get the id of the stage with last processed element
         currentWorkId.val = props.progressItems.val.ids_list.indexOf(val.data.stage);
 
+        updateWorkName(val);
+
         if (val.data.status === ProgressStatuses.COMPLETED) {
-            const lastProcessedElement = document.getElementById(`ProgressItem-${componentId}-${currentWorkId.val}`);
+            const lastProcessedElement = getLastProcessedElement();
 
             if (lastProcessedElement) {
-                completedElements.val.push(currentWorkId.val);
+                completedElements.val.push(lastProcessedElement);
 
-                gsap.to(lastProcessedElement, {
-                    color: 'green',
-                    ease: 'power1.inOut',
-                    duration: 0.35,
-                })
+                const workName = completedElements.val[currentWorkId.val].getElementsByTagName("p")[0];
+
+                if (workName) {
+                    setTimeout(() => {
+                        gsap.to(workName, {
+                            fontVariationSettings: "'wght' " + 900,
+                            ease: 'power1.inOut',
+                            duration: 0.35,
+                        })
+                    });
+                }
+            }
+
+            currentWorkId.val++;
+        }
+    }
+
+    currentWorkId.sub = (val) => {
+        const lastProcessedElement = document.getElementById(`ProgressItem-${componentId}-${currentWorkId.val}`);
+
+        if (lastProcessedElement) {
+            gsap.to(lastProcessedElement, {
+                opacity: 1,
+                ease: 'power1.inOut',
+                duration: 2,
+            })
+        }
+    }
+
+    const updateWorkName = (val: ProgressMessage) => {
+        const lastProcessedElement = getLastProcessedElement();
+        const workName = lastProcessedElement?.getElementsByTagName("p")[0];
+
+        if (workName) {
+            if (val.data.status === ProgressStatuses.INPROGRESS) {
+                workName.innerText = TranslationStore.t(`inprogress.${val.data.stage}`);
+            } else {
+                workName.innerText = TranslationStore.t(`${val.data.stage}`);
             }
         }
+    }
+
+    const getLastProcessedElement = () => {
+        return document.getElementById(`ProgressItem-${componentId}-${currentWorkId.val}`);
     }
 
     return (
         <>
             <div class={css.ProgressDisplay}>
-                {derive(([progressItems]) => {
-                    return <For in={progressItems.val.ids_list}>
-                        {(stage_name, i) => {
+                {
+                    derive(([progressItems]) => {
+                        if (progressItems.val.ids_list.length === 0) {
                             return <>
-                                <div class={css.Item} id={`ProgressItem-${componentId}-${i}`}>
-                                    {
-                                        props.message.derive(val => {
-                                            // TODO: Fix svg icon handling on finishing last download
-                                            if (currentWorkId.val !== null && currentWorkId.val > i) {
-                                                return <>
-                                                    <Svg>
-                                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M20 6L9 17L4 12" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </Svg>
-                                                </>
-                                            } else {
-                                                return <></>
-                                            }
-                                        })
-                                    }
-                                    {
-                                        props.message.derive(val => {
-                                            // TODO: Fix naming on finishing last download
-                                            if (val.data.status === ProgressStatuses.INPROGRESS && currentWorkId.val === i) {
-                                                return <>
-                                                    <p class={css.Name}>{TranslationStore.t(`inprogress.${stage_name}`)}</p>
-                                                </>
-                                            } else {
-                                                return <>
-                                                    <p class={css.Name}>{TranslationStore.t(stage_name)}</p>
-                                                </>
-                                            }
-                                        })
-                                    }
-                                    <div class={css.Status}>
-                                        {
-                                            props.message.derive(val => {
-                                                if (currentWorkId.val !== null && currentWorkId.val > i) {
-                                                    return <p>Completed</p>;
-                                                } else if (currentWorkId.val === i) {
-                                                        return <p>In Progress</p>;
-                                                } else if (currentWorkId.val !== null && currentWorkId.val < i) {
-                                                    return <p>Pending</p>;
-                                                } else {
-                                                    return <p>Unknown</p>;
-                                                }
-                                            })
-                                        }
-                                    </div>
-                                </div>
+                                <p>asd</p>
                             </>
-                        }}
-                    </For>
-                }, [props.progressItems])}
+                        } else {
+                            return <For in={progressItems.val.ids_list}>
+                                {(stage_name, i) => {
+                                    console.warn("PROGRESS ITEM: " + stage_name);
+                                    return <>
+                                        <div style="display:none">{stage_name}</div>
+                                        <div className={
+                                            currentWorkId.derive(val => val !== null && val < i ? `${css.Item} ${css.Pending}` : `${css.Item}`)
+                                        } id={`ProgressItem-${componentId}-${i}`}>
+                                            {
+                                                currentWorkId.derive(val => {
+                                                    if (val !== null && val > i) {
+                                                        return <>
+                                                            <DoneIcon />
+                                                        </>
+                                                    } else {
+                                                        return <></>
+                                                    }
+                                                })
+                                            }
+                                            {/* {
+                                                animatedCount.derive(val => {
+                                                    if (props.message.val.data.status === ProgressStatuses.INPROGRESS && currentWorkId.val === i) {
+                                                        return <>
+                                                            <p class={css.Name}>{TranslationStore.t(`inprogress.${stage_name}`)}</p>
+                                                        </>
+                                                    } else {
+                                                        console.warn("Animated Count = " + animatedCount.val);
+                                                        return <>
+                                                            <p class={`${css.Name} ${animatedCount.val >= i ? css.Completed : ""}`}>{TranslationStore.t(stage_name)}</p>
+                                                        </>
+                                                    }
+                                                })
+                                            } */}
+                                            <p class={`${css.Name}`}>{TranslationStore.t(stage_name)}</p>
+                                            <div class={css.Status}>
+                                                {
+                                                    currentWorkId.derive(val => {
+                                                        // TODO: Fix PENDING nad INPROGRESS items handling.
+                                                        // INPROGRESS triggers instantly after COMPLETE message is received.
+                                                        // It's wrong behavior
+
+                                                        if (val !== null && val > i) {
+                                                            return <p>Completed</p>;
+                                                        } else if (val === i) {
+                                                                return <p>In Progress</p>;
+                                                        } else if (val !== null && val < i) {
+                                                            return <p class={css.Pending}>Pending</p>;
+                                                        } else {
+                                                            return <p>Unknown</p>;
+                                                        }
+                                                    })
+                                                }
+                                            </div>
+                                        </div>
+                                    </>
+                                }}
+                            </For>
+                        }
+                    }, [props.progressItems])
+                }
             </div>
         </>
     )

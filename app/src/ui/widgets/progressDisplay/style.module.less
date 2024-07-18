@@ -61,6 +61,11 @@
         .Name {
             font-size: 16px;
             margin: 0;
+            font-variation-settings: "wght" 400;
+
+            &.Completed {
+                font-variation-settings: "wght" 900;
+            }
         }
 
         .Status {
@@ -71,6 +76,10 @@
                 margin: 0;
             }
         }
+    }
+
+    .Pending {
+        animation: linear pending 2s infinite;
     }
 }
 
@@ -84,5 +93,17 @@
     }
     100% {
         left: 100%;
+    }
+}
+
+@keyframes pending {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.5;
     }
 }
