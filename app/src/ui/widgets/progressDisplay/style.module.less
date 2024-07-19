@@ -1,5 +1,13 @@
 @import "@/ui/components/globalcss/vars/vars.module.less";
 
+@icon-gap: 5px;
+@icon-size: 20px;
+@default-icon-size: 20px;
+@abspos-measured-icon-size: 32px;
+@abspos-offset: calc(@abspos-measured-icon-size / @default-icon-size);
+@completed-workname-abspos-offset: calc(@icon-gap * @abspos-offset + @icon-size * @abspos-offset);
+@progressbar-border-radius: 3px;
+
 .ProgressDisplay {
     height: 200px;
     width: 100%;
@@ -21,13 +29,13 @@
 
     .Item {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
 
         .IndeterminableWrapper {
             width: 300px;
             height: 6px;
             background-color: #e0e0e0;
-            border-radius: 3px;
+            border-radius: @progressbar-border-radius;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
@@ -58,28 +66,62 @@
             }
         }
 
-        .Name {
-            font-size: 16px;
-            margin: 0;
-            font-variation-settings: "wght" 400;
+        .Container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
 
-            &.Completed {
-                font-variation-settings: "wght" 900;
+            .Name {
+                position: absolute;
+                font-size: 1rem;
+                margin: 0;
+                font-variation-settings: "wght" 400;
+            }
+
+            svg {
+                height: @icon-size;
+                width: @icon-size;
+                scale: 2;
+                position: absolute;
+            }
+
+            .Status {
+                margin-inline-start: auto;
+
+                p {
+                    color: @text-secondary-color;
+                    margin: 0;
+                }
             }
         }
 
-        .Status {
-            margin-inline-start: auto;
+        progress {
+            width: 100%;
+            height: 6px;
+            border-radius: @progressbar-border-radius; 
+        }
 
-            p {
-                color: @text-secondary-color;
-                margin: 0;
-            }
+        progress::-webkit-progress-bar {
+            background-color: #E6E6E6;
+            border-radius: 7px;
+        }
+
+        progress::-webkit-progress-value {
+            background-color: #007AFF;
+            border-radius: 7px;
         }
     }
 
     .Pending {
         animation: linear pending 2s infinite;
+    }
+
+    .Blinking {
+        animation: linear nameBlinking 2s infinite;
+
+        &:nth-child(2) {
+            animation-delay: 1s;
+        }
     }
 }
 
@@ -105,5 +147,17 @@
     }
     100% {
         opacity: 0.5;
+    }
+}
+
+@keyframes nameBlinking {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
     }
 }

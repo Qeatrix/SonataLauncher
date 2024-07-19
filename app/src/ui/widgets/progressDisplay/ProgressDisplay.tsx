@@ -10,6 +10,19 @@ import { gsap } from 'gsap/all';
 import DoneIcon from './assets/Done';
 
 
+// Values for animation
+const iconGap = 5;
+const iconSize = 20;
+const defaultIconSize = 20;
+
+const absposMeasuredIconSize = 32;
+const absposElementOffset = absposMeasuredIconSize / defaultIconSize;
+
+const absposCompletedWorknameOffset = iconGap * absposElementOffset + iconSize * absposElementOffset;
+
+const progressbarTopOffset = 10;
+
+
 interface IProgressDisplay {
     children?: JSX.Element | JSX.Element[],
     progressItems: Reactive<ProgressTargetsList>,
@@ -20,6 +33,14 @@ export function ProgressDisplay(props: IProgressDisplay) {
     const componentId = Store.makeId(6);
     const currentWorkId = ref<number | null>(null);
     const completedElements = ref<HTMLElement[]>([]);
+    const isCurrentWorkIdINPORGRESS = ref<boolean>(false);
+    const currentWorkProgressPercentage = ref<number>(0);
+    const taskElapsedTime = ref<string>("0.0s");
+
+    let classesGived = false;
+    let worknamesBlinked = false;
+    let timerInterval: any | null = null;
+    let blinkInterval: any | null = null;
 
     props.message.sub = (val) => {
         // Get the id of the stage with last processed element
@@ -27,37 +48,129 @@ export function ProgressDisplay(props: IProgressDisplay) {
 
         updateWorkName(val);
 
+        if (val.data.status === ProgressStatuses.INPROGRESS) {
+            const lastProcessedElement = getLastProcessedElement();
+            isCurrentWorkIdINPORGRESS.val = true;
+            currentWorkProgressPercentage.val = val.data.progress / val.data.max * 100;
+
+            if (timerInterval === null) {
+                timerInterval = startElapseTimer();
+            }
+
+            if (blinkInterval === null) {
+                blinkInterval = startWorknameBlinkTimer();
+            }
+
+/*             if (classesGived === false) {
+                const elements = lastProcessedElement?.getElementsByClassName(css.Name);
+
+                if (elements) {
+                    for (let i = 0; i < elements.length; i++) {
+                        elements[i].classList.add(css.Blinking);
+                    }
+
+                    classesGived = true;
+                }
+            } */
+        }
+
         if (val.data.status === ProgressStatuses.COMPLETED) {
+            isCurrentWorkIdINPORGRESS.val = false;
+
+            if (timerInterval) {
+                stopElapseTimer(timerInterval);
+                timerInterval = null;
+            }
+
+            if (blinkInterval) {
+                stopWorknameBlinkTimer(blinkInterval);
+                blinkInterval = null;
+            }
+
             const lastProcessedElement = getLastProcessedElement();
 
             if (lastProcessedElement) {
                 completedElements.val.push(lastProcessedElement);
 
-                const workName = completedElements.val[currentWorkId.val].getElementsByTagName("p")[0];
+                const workName = completedElements.val[currentWorkId.val].getElementsByClassName(css.Name);
+                const doneIcon = completedElements.val[currentWorkId.val].getElementsByTagName("svg");
 
-                if (workName) {
+                if (workName && doneIcon) {
+/*                     for (let i = 0; i < workName.length; i++) {
+                        workName[i].classList.remove(css.Blinking);
+                    } */
+
                     setTimeout(() => {
-                        gsap.to(workName, {
-                            fontVariationSettings: "'wght' " + 900,
-                            ease: 'power1.inOut',
+                        gsap.to(workName[0], {
+                            opacity: "1",
+                            left: absposCompletedWorknameOffset,
+                            ease: 'power1.InOut',
                             duration: 0.35,
+                        })
+
+                        gsap.to(workName[1], {
+                            opacity: "0",
+                            left: absposCompletedWorknameOffset,
+                            ease: 'power1.InOut',
+                            duration: 0.35,
+                        })
+
+                        gsap.to(workName, {
+                            fontVariationSettings: "'wght' " + 500,
+                            fontSize: "1rem",
+                            left: absposCompletedWorknameOffset,
+                            ease: 'power1.InOut',
+                            duration: 0.35,
+                        })
+
+                        gsap.to(doneIcon, {
+                            opacity: 1,
+                            scale: 1,
+                            ease: 'back.out(1.7)',
+                            duration: 0.35,
+                            delay: 0.2,
                         })
                     });
                 }
             }
 
             currentWorkId.val++;
+            classesGived = false;
+        }
+    }
+
+    isCurrentWorkIdINPORGRESS.sub = (val) => {
+        const lastProcessedElement = getLastProcessedElement();
+
+        if (lastProcessedElement) {
+            const progressElement = lastProcessedElement.getElementsByTagName("progress");
+            gsap.to(progressElement, {
+                opacity: val ? 1 : 0,
+                marginTop: val ? `${progressbarTopOffset}px` : `0px`,
+                ease: 'power1.inOut',
+                duration: 0.1,
+            })
+
+            const workName = lastProcessedElement.getElementsByClassName(css.Name);
+            if (workName) {
+                gsap.to(workName, {
+                    fontSize: "1.25rem",
+                    fontVariationSettings: "'wght' " + 500,
+                    ease: 'power1.InOut',
+                    duration: 0.35,
+                })
+            }
         }
     }
 
     currentWorkId.sub = (val) => {
-        const lastProcessedElement = document.getElementById(`ProgressItem-${componentId}-${currentWorkId.val}`);
+        const lastProcessedElement = getLastProcessedElement();
 
         if (lastProcessedElement) {
             gsap.to(lastProcessedElement, {
                 opacity: 1,
                 ease: 'power1.inOut',
-                duration: 2,
+                duration: 0.1,
             })
         }
     }
@@ -79,6 +192,60 @@ export function ProgressDisplay(props: IProgressDisplay) {
         return document.getElementById(`ProgressItem-${componentId}-${currentWorkId.val}`);
     }
 
+    const startElapseTimer = () => {
+        const timerStartTime = new Date();
+
+        const timerInterval = setInterval(() => {
+            const elapsedSeconds = new Date().getTime() - timerStartTime.getTime();
+            const seconds = (elapsedSeconds / 1000).toFixed(1);
+            taskElapsedTime.val = `${seconds}s`;
+        }, 100)
+
+        return timerInterval;
+    }
+
+    const stopElapseTimer = (timerInterval: number) => {
+        clearInterval(timerInterval);
+        taskElapsedTime.val = "0.0s";
+    }
+
+    const startWorknameBlinkTimer = () => {
+        const lastProcessedElement = getLastProcessedElement();
+        const workName = lastProcessedElement?.getElementsByClassName(css.Name);
+
+        const transitionType = "power4.Out"
+        const transitionDuration = 1;
+
+        return setInterval(() => {
+            if (workName) {
+                gsap.to(workName[0], {
+                    opacity: worknamesBlinked ? 1 : 0,
+                    ease: transitionType,
+                    duration: transitionDuration,
+                })
+
+                gsap.to(workName[1], {
+                    opacity: worknamesBlinked ? 0 : 1,
+                    ease: transitionType,
+                    duration: transitionDuration,
+                })
+
+                if (worknamesBlinked) {
+                    worknamesBlinked = false;
+                } else {
+                    worknamesBlinked = true;
+                }
+            } else {
+                console.warn("Workname not found");
+            }
+        }, 4000)
+    }
+
+    const stopWorknameBlinkTimer = (timerInterval: number) => {
+        clearInterval(timerInterval);
+        worknamesBlinked = false;
+    }
+
     return (
         <>
             <div class={css.ProgressDisplay}>
@@ -86,62 +253,58 @@ export function ProgressDisplay(props: IProgressDisplay) {
                     derive(([progressItems]) => {
                         if (progressItems.val.ids_list.length === 0) {
                             return <>
-                                <p>asd</p>
+                                <p>Nothing to show</p>
                             </>
                         } else {
                             return <For in={progressItems.val.ids_list}>
                                 {(stage_name, i) => {
                                     console.warn("PROGRESS ITEM: " + stage_name);
                                     return <>
-                                        <div style="display:none">{stage_name}</div>
                                         <div className={
                                             currentWorkId.derive(val => val !== null && val < i ? `${css.Item} ${css.Pending}` : `${css.Item}`)
                                         } id={`ProgressItem-${componentId}-${i}`}>
-                                            {
-                                                currentWorkId.derive(val => {
-                                                    if (val !== null && val > i) {
-                                                        return <>
-                                                            <DoneIcon />
-                                                        </>
-                                                    } else {
-                                                        return <></>
-                                                    }
-                                                })
-                                            }
-                                            {/* {
-                                                animatedCount.derive(val => {
-                                                    if (props.message.val.data.status === ProgressStatuses.INPROGRESS && currentWorkId.val === i) {
-                                                        return <>
-                                                            <p class={css.Name}>{TranslationStore.t(`inprogress.${stage_name}`)}</p>
-                                                        </>
-                                                    } else {
-                                                        console.warn("Animated Count = " + animatedCount.val);
-                                                        return <>
-                                                            <p class={`${css.Name} ${animatedCount.val >= i ? css.Completed : ""}`}>{TranslationStore.t(stage_name)}</p>
-                                                        </>
-                                                    }
-                                                })
-                                            } */}
-                                            <p class={`${css.Name}`}>{TranslationStore.t(stage_name)}</p>
-                                            <div class={css.Status}>
-                                                {
-                                                    currentWorkId.derive(val => {
-                                                        // TODO: Fix PENDING nad INPROGRESS items handling.
-                                                        // INPROGRESS triggers instantly after COMPLETE message is received.
-                                                        // It's wrong behavior
-
-                                                        if (val !== null && val > i) {
-                                                            return <p>Completed</p>;
-                                                        } else if (val === i) {
-                                                                return <p>In Progress</p>;
-                                                        } else if (val !== null && val < i) {
-                                                            return <p class={css.Pending}>Pending</p>;
-                                                        } else {
-                                                            return <p>Unknown</p>;
+                                            <div class={css.Container}>
+                                                <DoneIcon style="opacity:0" />
+                                                <div class={css.Container}>
+                                                    <div class={css.NameContainer}>
+                                                        <p class={`${css.Name}`}>{TranslationStore.t(stage_name)}</p>
+                                                        <p class={`${css.Name}`} style="opacity:0">{
+                                                            props.message.derive(val => {
+                                                                // TODO: Second <p> may still be shown after process completion
+                                                                if (val.data.progress !== null && val.data.max > 0) {
+                                                                    return `Downloading · ${val.data.progress}/${val.data.max}`;
+                                                                } else {
+                                                                    return TranslationStore.t(`inprocess.${stage_name}`);
+                                                                }
+                                                            })
+                                                            }</p>
+                                                    </div>
+                                                    <div class={css.Status}>
+                                                        {
+                                                            derive(([currentWorkId]) => {
+                                                                if (currentWorkId.val !== null && currentWorkId.val > i) {
+                                                                    return <p>Completed</p>;
+                                                                } else if (currentWorkId.val === i && isCurrentWorkIdINPORGRESS.val === true) {
+                                                                        return <p>
+                                                                            {
+                                                                                taskElapsedTime.derive(val => {
+                                                                                    return val;
+                                                                                })
+                                                                            }
+                                                                        </p>;
+                                                                } else if (currentWorkId.val !== null &&
+                                                                        (currentWorkId.val < i ||
+                                                                        (currentWorkId.val === i && isCurrentWorkIdINPORGRESS.val === false))) {
+                                                                    return <p class={css.Pending}>Pending</p>;
+                                                                } else {
+                                                                    return <p>Unknown</p>;
+                                                                }
+                                                            }, [currentWorkId, isCurrentWorkIdINPORGRESS])
                                                         }
-                                                    })
-                                                }
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <progress value={currentWorkProgressPercentage.derive(val => val)} min="0" max="100" style="opacity:0"></progress>
                                         </div>
                                     </>
                                 }}

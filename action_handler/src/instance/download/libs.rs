@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::OpenOptions;
-use async_std::task;
+use async_std::{println, task};
 use async_std::{fs::{create_dir_all, File}, io::WriteExt};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -140,6 +140,7 @@ async fn extract_manifest_libs(manifest: &serde_json::Value, current_os: &str, p
         version_libs.insert(hash, (name, path, client_url));
     }
 
+
     println!("{:#?}", version_libs);
     match download_missing_libs(version_libs, paths, ws).await {
         Ok(paths) => Ok(paths),
@@ -209,12 +210,12 @@ async fn download_missing_libs<'a>(version_libs: HashMap<&str, (String, String, 
                 }));
 
                 if futures.len() >= 100 {
-                    process_futures(&mut futures, &mut downloaded_libs, libraries.len(), ws).await;
+                    process_futures(&mut futures, &mut downloaded_libs, version_libs.len(), ws).await;
                 }
             }
         }
 
-        process_futures(&mut futures, &mut downloaded_libs, libraries.len(), ws).await;
+        process_futures(&mut futures, &mut downloaded_libs, version_libs.len(), ws).await;
     }
 
     register_libs(downloaded_libs, metacache).await;
