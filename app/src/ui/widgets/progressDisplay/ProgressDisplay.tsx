@@ -39,6 +39,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
 
     let classesGived = false;
     let worknamesBlinked = false;
+    let earlyTweaksDone = false;
     let timerInterval: any | null = null;
     let blinkInterval: any | null = null;
 
@@ -59,6 +60,18 @@ export function ProgressDisplay(props: IProgressDisplay) {
 
             if (blinkInterval === null) {
                 blinkInterval = startWorknameBlinkTimer();
+            }
+
+            if (earlyTweaksDone === false) {
+                console.error(lastProcessedElement);
+                gsap.to(lastProcessedElement, {
+                    marginTop: '10px',
+                    marginBottom: '10px',
+                    ease: 'power1.InOut',
+                    duration: 0.35,
+                })
+
+                earlyTweaksDone = true;
             }
 
 /*             if (classesGived === false) {
@@ -101,6 +114,13 @@ export function ProgressDisplay(props: IProgressDisplay) {
                     } */
 
                     setTimeout(() => {
+                        gsap.to(lastProcessedElement, {
+                            marginTop: 0,
+                            marginBottom: 0,
+                            ease: 'power1.InOut',
+                            duration: 0.35,
+                        })
+
                         gsap.to(workName[0], {
                             opacity: "1",
                             left: absposCompletedWorknameOffset,
@@ -136,6 +156,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
 
             currentWorkId.val++;
             classesGived = false;
+            earlyTweaksDone = false;
         }
     }
 
