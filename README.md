@@ -26,6 +26,8 @@ cd action_handler && cargo run build
 - [ ] Separate endpoint for instance launching
 - [ ] Code refactoring in `instance/mod.rs`
 - [ ] Endpoint for sending of installed instances
+	- [ ] Instance directory initialization
+ 		- [ ] Refactor `init_instance_dir` function
 	- [ ] Installed instances storing implementation in JSON
 - [ ] Endpoint for sending required authenticated account
 	- [ ] Storing authenticated accounts
