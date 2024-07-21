@@ -6,13 +6,13 @@ use futures::{stream::FuturesUnordered, StreamExt};
 use serde_json::json;
 use tide_websockets::WebSocketConnection;
 
-use crate::types::ws::{send_ws_msg, ProgressData, ProgressMessage, ProgressTarget};
+use crate::{instance::Paths, types::ws::{send_ws_msg, ProgressData, ProgressMessage, ProgressTarget}};
 
 use super::manifest::is_array_exists;
 
 
-pub async fn download_version_assets<'a>(manifest: &serde_json::Value, assets_path: &'a str, ws: &WebSocketConnection) {
-    extract_manifest_assets(manifest, assets_path, ws).await;
+pub async fn download_version_assets<'a>(manifest: &serde_json::Value, assets_path: &'a str, ws: &WebSocketConnection, paths: &Paths) {
+    extract_manifest_assets(manifest, assets_path, ws, paths).await;
     println!("Asset extraction completed");
     // ws.send_string(format!("Assets downloaded")).await;
 
@@ -55,17 +55,16 @@ struct AssetInfo {
     hash: String,
 }
 
-async fn extract_manifest_assets<'a>(manifest: &'a serde_json::Value, assets_path: &str, ws: &WebSocketConnection) {
+async fn extract_manifest_assets<'a>(manifest: &'a serde_json::Value, assets_path: &str, ws: &WebSocketConnection, paths: &Paths) {
     let base_url = "https://resources.download.minecraft.net/";
-    let metacache_file_path = "/home/quartix/.sonata/metacache.json";
-    let metacache_file = std::fs::File::open("/home/quartix/.sonata/metacache.json").unwrap();
+    let metacache_file = std::fs::File::open(&paths.metacache_file).unwrap();
     let mut metacache: serde_json::Value = serde_json::from_reader(&metacache_file).unwrap();
     let mut downloaded_assets: HashSet<AssetInfo> = HashSet::new();
 
     if !is_array_exists(&metacache, "assets") {
         if let Some(metacache_object) = metacache.as_object_mut() {
             metacache_object.insert("assets".to_string(), json!([]));
-            let mut metacache_file = std::fs::File::create(metacache_file_path).unwrap();
+            let mut metacache_file = std::fs::File::create(&paths.metacache_file).unwrap();
             metacache_file.write_all(serde_json::to_string_pretty(&metacache).unwrap().as_bytes()).unwrap();
         }
     }
@@ -108,7 +107,7 @@ async fn extract_manifest_assets<'a>(manifest: &'a serde_json::Value, assets_pat
         }
     }
 
-    register_assets(downloaded_assets, metacache).await;
+    register_assets(downloaded_assets, metacache, paths).await;
 }
 
 async fn process_futures
@@ -177,7 +176,7 @@ async fn download_asset(base_url: &str, asset_hash: &str, asset_name: &str, path
     }
 }
 
-async fn register_assets(downloaded_assets: HashSet<AssetInfo>, mut metacache: serde_json::Value) {
+async fn register_assets(downloaded_assets: HashSet<AssetInfo>, mut metacache: serde_json::Value, paths: &Paths) {
     if let Some(assets) = metacache["assets"].as_array_mut() {
         for item in downloaded_assets.iter() {
             assets.push(json!({
@@ -185,9 +184,12 @@ async fn register_assets(downloaded_assets: HashSet<AssetInfo>, mut metacache: s
                 "hash": item.hash,
             }));
         }
+    } else {
+        println!("Failed to find \"assets\" array in metacache file");
+        return;
     }
 
-    let mut metacache_file = File::create("/home/quartix/.sonata/metacache.json").await.unwrap();
+    let mut metacache_file = File::create(&paths.metacache_file).await.unwrap();
     metacache_file.write_all(serde_json::to_string_pretty(&metacache).unwrap().as_bytes()).await.unwrap();
 }
 

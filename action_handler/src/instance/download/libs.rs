@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::OpenOptions;
-use async_std::{println, task};
+use async_std::{path, task};
 use async_std::{fs::{create_dir_all, File}, io::WriteExt};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -11,8 +11,8 @@ use crate::instance::Paths;
 use crate::types::ws::{send_ws_msg, ProgressData, ProgressFinishData, ProgressFinishMessage, ProgressMessage, ProgressTarget};
 use crate::utils::metacache;
 
-pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Paths, ws: &WebSocketConnection) -> Result<(&'a str, Vec<String>), String> {
-    let paths = match extract_manifest_libs(manifest, "linux", paths, ws).await {
+pub async fn download_version_libs(manifest: &serde_json::Value, paths: &Paths, ws: &WebSocketConnection) -> Result<(String, Vec<String>), String> {
+    let done_paths = match extract_manifest_libs(manifest, "osx", paths, ws).await {
         Ok(paths) => paths,
         Err(e) => return Err(e),
     };
@@ -51,7 +51,7 @@ pub async fn download_version_libs<'a>(manifest: &serde_json::Value, paths: &Pat
         println!("Failed to send update info, {e}");
     }
 
-    Ok(("/home/quartix/.sonata/libraries/", paths))
+    Ok((format!("{}/.sonata/libraries/", paths.root), done_paths))
 }
 
 async fn extract_manifest_libs(manifest: &serde_json::Value, current_os: &str, paths: &Paths, ws: &WebSocketConnection) -> Result<Vec<String>, String> {
@@ -156,19 +156,17 @@ struct LibInfo {
     path: String,
 }
 async fn download_missing_libs<'a>(version_libs: HashMap<&str, (String, String, &str)>, paths: &'a Paths, ws: &WebSocketConnection) -> Result<Vec<String>, String> {
-    let metacache_file_path = format!("{}/metacache.json", paths.root.to_owned());
-
     let metacache_file = OpenOptions::new()
                             .read(true)
                             .write(true)
                             .create(true)
-                            .open(&metacache_file_path).unwrap();
+                            .open(&paths.metacache_file).unwrap();
 
 
     let metacache: serde_json::Value = match serde_json::from_reader(&metacache_file) {
         Ok(value) => value,
         Err(_) => {
-            match metacache::recreate(&metacache_file_path) {
+            match metacache::recreate(&paths.metacache_file) {
                 Ok((_file, value)) => value,
                 Err(e) => {
                     println!("Failed to recreate metacache file: {}", e);
@@ -218,7 +216,7 @@ async fn download_missing_libs<'a>(version_libs: HashMap<&str, (String, String, 
         process_futures(&mut futures, &mut downloaded_libs, version_libs.len(), ws).await;
     }
 
-    register_libs(downloaded_libs, metacache).await;
+    register_libs(downloaded_libs, metacache, paths).await;
     Ok(libs_paths)
 }
 
@@ -304,7 +302,7 @@ async fn download_libs
     }
 }
 
-async fn register_libs(downloaded_libs: HashSet<LibInfo>, mut metacache: serde_json::Value) {
+async fn register_libs(downloaded_libs: HashSet<LibInfo>, mut metacache: serde_json::Value, paths: &Paths) {
     if let Some(libs) = metacache["libraries"].as_array_mut() {
         for item in downloaded_libs.iter() {
             libs.push(json!({
@@ -315,6 +313,6 @@ async fn register_libs(downloaded_libs: HashSet<LibInfo>, mut metacache: serde_j
         }
     }
 
-    let mut metacache_file = File::create("/home/quartix/.sonata/metacache.json").await.unwrap();
+    let mut metacache_file = File::create(&paths.metacache_file).await.unwrap();
     metacache_file.write_all(serde_json::to_string_pretty(&metacache).unwrap().as_bytes()).await.unwrap();
 }

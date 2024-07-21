@@ -70,6 +70,7 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
 
     // tmp_args.append(&mut jvm_args);
 
+    tmp_args.push("-XstartOnFirstThread".to_string());
     tmp_args.push("-Djava.library.path=".to_owned() + "/home/quartix/.minecraft/versions/1.7.4/natives/");
     // tmp_args.push("-Djna.tmpdir=".to_owned() + natives_dir);
     // tmp_args.push("-Dorg.lwjgl.system.SharedLibraryExtractPath=".to_owned() + natives_dir);
