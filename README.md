@@ -20,14 +20,14 @@ cd action_handler && cargo run build
 
 ## Project Todo
 #### Action Handler
-- [ ] Home directory handling
+- [x] Home directory handling
 - [ ] Refactor WebSocket messages types
 - [ ] Implement **natives** folder handling
 - [ ] Separate endpoint for instance launching
 - [ ] Code refactoring in `instance/mod.rs`
 - [ ] Endpoint for sending of installed instances
-	- [ ] Instance directory initialization
- 		- [ ] Refactor `init_instance_dir` function
+	- [x] Instance directory initialization
+ 		- [x] Refactor `init_instance_dir` function
 	- [ ] Installed instances storing implementation in JSON
 - [ ] Endpoint for sending required authenticated account
 	- [ ] Storing authenticated accounts
