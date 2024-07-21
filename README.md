@@ -20,6 +20,7 @@ cd action_handler && cargo run build
 
 ## Project Todo
 #### Action Handler
+- [ ] Home directory handling
 - [ ] Refactor WebSocket messages types
 - [ ] Implement **natives** folder handling
 - [ ] Separate endpoint for instance launching
