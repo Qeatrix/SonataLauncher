@@ -28,7 +28,7 @@ cd action_handler && cargo run build
 - [ ] Endpoint for sending of installed instances
 	- [x] Instance directory initialization
  		- [x] Refactor `init_instance_dir` function
-	- [ ] Installed instances storing implementation in JSON
+	- [x] Installed instances storing implementation in JSON
 - [ ] Endpoint for sending required authenticated account
 	- [ ] Storing authenticated accounts
 #### Frontend
