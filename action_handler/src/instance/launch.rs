@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use async_std::process::Command;
+
+use super::Paths;
 /* use serde::Deserialize; */
 
 /* #[derive(Debug, Deserialize)]
@@ -28,12 +30,12 @@ pub struct LaunchArgs {
     jvm_args: JVMArgs,
 } */
 
-pub async fn launch_instance(manifest: serde_json::Value, info: &HashMap<String, String>) {
-    let args = define_launch_args(manifest, info).await;
+pub async fn launch_instance(manifest: serde_json::Value, info: &HashMap<String, String>, paths: &Paths) {
+    let args = define_launch_args(manifest, info, paths).await;
     println!("{:#?}", args);
 
     // Command execution
-    let output = Command::new("java")
+    let output = Command::new("/Users/quartix/Library/Application Support/tlauncher/mojang_jre/jre-legacy/mac-os/jre-legacy/jre.bundle/Contents/Home/bin/java")
         .args(args)
         .output()
         .await
@@ -42,7 +44,7 @@ pub async fn launch_instance(manifest: serde_json::Value, info: &HashMap<String,
     println!("{:#?}", output);
 }
 
-async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, String>) -> Vec<String> {
+async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, String>, _paths: &Paths) -> Vec<String> {
     let mut tmp_args: Vec<String> = Vec::new();
 
     println!("{:#?}", info);
@@ -70,8 +72,8 @@ async fn define_launch_args(manifest: serde_json::Value, info: &HashMap<String, 
 
     // tmp_args.append(&mut jvm_args);
 
-    tmp_args.push("-XstartOnFirstThread".to_string());
-    tmp_args.push("-Djava.library.path=".to_owned() + "/home/quartix/.minecraft/versions/1.7.4/natives/");
+    // tmp_args.push("-XstartOnFirstThread".to_string());
+    tmp_args.push("-Djava.library.path=".to_owned() + r"/Users/quartix/Library/Application Support/minecraft/versions/1.7.4/natives");
     // tmp_args.push("-Djna.tmpdir=".to_owned() + natives_dir);
     // tmp_args.push("-Dorg.lwjgl.system.SharedLibraryExtractPath=".to_owned() + natives_dir);
     // tmp_args.push("-Dio.netty.native.workdir=/".to_owned() + natives_dir);

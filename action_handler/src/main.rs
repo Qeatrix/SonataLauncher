@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use home::home_dir;
 
 use async_std::stream::StreamExt;
 use serde_json;
@@ -9,8 +10,12 @@ use surf;
 pub mod instance;
 use instance::Instance;
 
+pub mod java;
+use java::Java;
+
 pub mod root;
 use root::LauncherRoot;
+
 use tide_websockets::Message;
 use tide_websockets::WebSocket;
 use tide_websockets::WebSocketConnection;
@@ -29,13 +34,26 @@ struct Animal {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    // let available_java_url = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
+    match home_dir() {
+        Some(path) => {
+            let path = format!("{}/.sonata/java", path.display());
+            let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), path);
+            Java::init(java_properties).await;
+        },
+        None => (),
+    };
+
     let mut app = tide::new();
-    
+
     // Example Data
     app.at("/orders/shoes").post(order_shoes);
 
     // Init routes
     app.at("/init/root").post(handle_init_root);
+
+    // Java routes
+    app.at("/ws/java/install").get(WebSocket::new(|_req, ws| download_java_ws(ws)));
 
     // Instance routes
     app.at("/instance/download_versions").get(get_versions);
@@ -51,6 +69,35 @@ async fn main() -> tide::Result<()> {
 }
 
 
+
+#[derive(Debug, Deserialize)]
+struct DownloadRequest {
+    java_ver: String,
+}
+
+async fn download_java_ws(mut ws: WebSocketConnection) -> tide::Result<()> {
+    while let Some(Ok(Message::Text(input))) = ws.next().await {
+        let download_request: DownloadRequest = serde_json::from_str(&input).map_err(|e| {
+            tide::Error::from_str(400, format!("Failed to parse recieved JSON: {}", e))
+        })?;
+
+        let DownloadRequest { java_ver } = download_request;
+        // let available_java_url = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
+
+        match home_dir() {
+            Some(path) => {
+                let path = format!("{}/.sonata", path.display());
+                let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), path);
+                Java::init(java_properties).await;
+            },
+            None => (),
+        };
+
+        println!("Recieved java version: {}", java_ver);
+    }
+
+    Ok(())
+}
 
 async fn create_instance_ws(mut ws: WebSocketConnection) -> tide::Result<()> {
     while let Some(Ok(Message::Text(input))) = ws.next().await {

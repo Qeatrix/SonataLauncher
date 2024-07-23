@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::OpenOptions;
-use async_std::{path, task};
+use async_std::task;
 use async_std::{fs::{create_dir_all, File}, io::WriteExt};
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
@@ -8,7 +8,7 @@ use serde_json::{self, json};
 use tide_websockets::WebSocketConnection;
 
 use crate::instance::Paths;
-use crate::types::ws::{send_ws_msg, ProgressData, ProgressFinishData, ProgressFinishMessage, ProgressMessage, ProgressTarget};
+use crate::types::ws::{send_ws_msg, ProgressData, ProgressMessage, ProgressTarget};
 use crate::utils::metacache;
 
 pub async fn download_version_libs(manifest: &serde_json::Value, paths: &Paths, ws: &WebSocketConnection) -> Result<(String, Vec<String>), String> {
@@ -83,7 +83,7 @@ async fn extract_manifest_libs(manifest: &serde_json::Value, current_os: &str, p
             } else {
                 true
             };
-            
+
             if allow_lib {
                 let lib_path = lib["downloads"]["artifact"]["path"].as_str();
                 let lib_url = lib["downloads"]["artifact"]["url"].as_str();
@@ -108,7 +108,7 @@ async fn extract_manifest_libs(manifest: &serde_json::Value, current_os: &str, p
                                     let lib_path = v["path"].as_str();
                                     let lib_url = v["url"].as_str();
                                     let lib_hash = v["sha1"].as_str();
-                                    
+
                                     if let (Some(lib_name),
                                             Some(lib_path),
                                             Some(lib_url),

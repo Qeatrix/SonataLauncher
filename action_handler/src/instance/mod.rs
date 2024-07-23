@@ -1,8 +1,11 @@
 use std::collections::HashMap;
+// use std::env::consts::OS;
+// use std::ffi::OsStr;
 use std::fs::OpenOptions;
-use chrono::format;
+// use chrono::format;
+// use home::env::OS_ENV;
 use home::home_dir;
-use std::io::{ErrorKind, Write};
+use std::io::ErrorKind;
 use async_std::fs::create_dir_all;
 
 pub mod download;
@@ -27,7 +30,7 @@ pub struct Paths {
     root: String,
     libs: String,
     assets: String,
-    instances: String,
+    // instances: String,
     instance: String,
     instances_list_file: String,
     meta: String,
@@ -168,8 +171,7 @@ impl Instance {
             Err(e) => return Err(format!("Failed to initialize instance directory: {}", e))
         };
 
-        println!("asd");
-        launch::launch_instance(verson_manifest, &self.info).await;
+        launch::launch_instance(verson_manifest, &self.info, &paths).await;
 
         Ok(format!("asd"))
     }
@@ -178,7 +180,7 @@ impl Instance {
         match create_dir_all(&paths.instance).await {
             Ok(_) => {
                 println!("Created instance dir");
-                
+
                 let instances_list_file = match OpenOptions::new()
                     .read(true)
                     .write(false)
@@ -225,7 +227,7 @@ impl Instance {
                                     }
                                 }
                             }
-                            
+
                             vanilla.push(json!({
                                 "name": name,
                                 "path": paths.instance,
@@ -255,18 +257,18 @@ impl Instance {
 
 // Returnes Libs path, Assets path, Instances path
 fn get_required_paths(instance_name: &String) -> Result<Paths, String> {
-    let homedir = match home_dir() {
-        Some(path) => path,
+    let root = match home_dir() {
+        Some(path) => {
+            format!("{}/.sonata", path.display())
+        },
         None => return Err("Failed to get home directory".to_string()),
     };
-
-    let root = format!("{}/.sonata", homedir.display());
 
     Ok(Paths {
         root: root.to_string(),
         libs: format!("{}/libraries", root),
         assets: format!("{}/assets", root),
-        instances: format!("{}/instances", root),
+        // instances: format!("{}/instances", root),
         instance: format!("{}/instances/{}", root, instance_name),
         instances_list_file: format!("{}/instances/instances_list.json", root),
         meta: format!("{}/meta", root),

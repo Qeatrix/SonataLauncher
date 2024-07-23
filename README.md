@@ -20,6 +20,9 @@ cd action_handler && cargo run build
 
 ## Project Todo
 #### Action Handler
+- [x] Different Java versions downloader
+  - [ ] Endpoint for Java download
+  - [ ] WebSockets integration
 - [x] Home directory handling
 - [ ] Refactor WebSocket messages types
 - [ ] Implement **natives** folder handling
