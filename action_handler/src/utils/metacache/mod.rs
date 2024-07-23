@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 
 pub fn recreate(file: &String) -> Result<(File, Value), String> {
     let metacache_default_struct: serde_json::Value = json!({
+        "javas": [],
         "libraries": [],
         "assets": []
     });

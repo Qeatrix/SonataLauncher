@@ -40,7 +40,7 @@ pub struct Paths {
 pub struct Instance {
     name: String,
     url: String,
-    info: HashMap<String, String>
+    info: HashMap<String, String>,
 }
 
 impl Instance {

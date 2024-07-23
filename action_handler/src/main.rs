@@ -37,9 +37,10 @@ async fn main() -> tide::Result<()> {
     // let available_java_url = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
     match home_dir() {
         Some(path) => {
-            let path = format!("{}/.sonata/java", path.display());
-            let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), path);
-            Java::init(java_properties).await;
+            let java_path = format!("{}/.sonata/java", path.display());
+            let metacache_path = format!("{}/.sonata/metacache.json", path.display());
+            let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), java_path);
+            Java::init(java_properties, metacache_path).await;
         },
         None => (),
     };
@@ -86,9 +87,10 @@ async fn download_java_ws(mut ws: WebSocketConnection) -> tide::Result<()> {
 
         match home_dir() {
             Some(path) => {
-                let path = format!("{}/.sonata", path.display());
-                let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), path);
-                Java::init(java_properties).await;
+                let java_path = format!("{}/.sonata/java", path.display());
+                let metacache_path = format!("{}/.sonata/metacache.json", path.display());
+                let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), java_path);
+                Java::init(java_properties, metacache_path).await;
             },
             None => (),
         };
