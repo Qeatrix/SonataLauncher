@@ -20,6 +20,7 @@ cd action_handler && cargo run build
 
 ## Project Todo
 #### Action Handler
+- [ ] Logger implementation
 - [x] Different Java versions downloader
   - [ ] Endpoint for Java download
   - [ ] WebSockets integration

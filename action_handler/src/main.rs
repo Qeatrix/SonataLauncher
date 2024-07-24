@@ -211,7 +211,7 @@ async fn get_versions(_req: Request<()>) -> tide::Result {
 struct InstanceRequest {
     name: String,
     url: String,
-    info: HashMap<String, String>
+    info: HashMap<String, String>,
 }
 
 // async fn create_instance(mut req: Request<()>) -> tide::Result {

@@ -1,13 +1,15 @@
-use async_std::fs::create_dir_all;
-use serde_json::json;
+use async_std::{fs::create_dir_all, task::{self, JoinHandle}};
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
+use serde_json::{json, Value};
 use std::{collections::HashSet, io::{BufReader, Cursor, Write}, fs::{OpenOptions, File}};
 
-use crate::{instance::download::manifest, utils::{download::{self, download_in_json}, metacache::{self, recreate}}};
+use crate::utils::{download::{self, download, download_in_json}, metacache::recreate};
 
 use super::{arch, Java};
 
 
-enum DownladTypes {
+enum DownloadTypes {
     LZMA,
     Raw,
 }
@@ -51,6 +53,7 @@ pub async fn init(java: &mut Java, metacache_path: String) -> Result<String, Str
     match parse_java_manifest(java_manifest, &java, metacache_path, metacache).await {
         Ok(data) => {
             if let Some(exec_file) = data {
+                println!("Downloaded");
                 return Ok(exec_file);
             } else {
                 return Err(format!("Failed to find executable file"));
@@ -95,45 +98,71 @@ async fn register_java(
     Ok(())
 }
 
-async fn get_java_part(download_type: DownladTypes, url: &str, file_type: &str, path: &String) -> Result<(), String> {
+async fn download_java_part(url: &str, download_type: DownloadTypes, path: &String) -> Result<(), String> {
+    let path_to_file = &path[..path.rfind('/').unwrap()];
+    let file_name = &path[path.rfind('/').unwrap() + 1..];
+
+    match create_dir_all(path_to_file).await {
+        Ok(_) => (),
+        Err(e) => return Err(e.to_string()),
+    };
+
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(path_to_file.to_owned() + "/" + file_name).unwrap();
+
+    let data = match download(url.to_string()).await {
+        Ok(data) => data,
+        Err(e) => return Err(e),
+    };
+
+    let file_buffer = match download_type {
+        DownloadTypes::LZMA => {
+            let mut data = BufReader::new(Cursor::new(data));
+            let mut decomp = Vec::new();
+
+            if let Err(e) = lzma_rs::lzma_decompress(&mut data, &mut decomp) {
+                return Err(e.to_string());
+            }
+
+            decomp
+        },
+        DownloadTypes::Raw => {
+            data
+        }
+    };
+
+    file.write_all(&file_buffer).unwrap();
+
+    println!("File writed: {}", path);
+
+    Ok(())
+}
+
+async fn get_java_part
+(
+    downloads: serde_json::Map<std::string::String, Value>,
+    file_type: &str,
+    path: &String,
+) -> Result<EntryInfo, String> {
+    let (download_type, url) = if let Some(file_url) = downloads.get("lzma").and_then(|v| v["url"].as_str()) {
+        (DownloadTypes::LZMA, file_url)
+    } else if let Some(file_url) = downloads.get("raw").and_then(|v| v["url"].as_str()) {
+        (DownloadTypes::Raw, file_url)
+    } else {
+        return Err(format!("Failed to determine download type"));
+    };
+
     match file_type {
         "file" => {
-            let path_to_file = &path[..path.rfind('/').unwrap()];
-            let file_name = &path[path.rfind('/').unwrap() + 1..];
-
-            match create_dir_all(path_to_file).await {
+            match download_java_part(url, download_type, path).await {
                 Ok(_) => (),
-                Err(e) => return Err(e.to_string()),
-            };
+                Err(e) => return Err(e),
+            }
 
-            let mut file = OpenOptions::new()
-                .read(true)
-                .write(true)
-                .create(true)
-                .open(path_to_file.to_owned() + "/" + file_name).unwrap();
-
-            let file_buffer = match download_type {
-                DownladTypes::LZMA => {
-                    let mut file_data = match download::download(url.to_string()).await {
-                        Ok(data) => BufReader::new(Cursor::new(data)),
-                        Err(e) => return Err(e),
-                    };
-
-                    let mut decomp = Vec::new();
-                    lzma_rs::lzma_decompress(&mut file_data, &mut decomp).unwrap();
-                    decomp
-                },
-                DownladTypes::Raw => {
-                    match download::download(url.to_string()).await {
-                        Ok(data) => data,
-                        Err(e) => return Err(e),
-                    }
-                }
-            };
-
-            file.write_all(&file_buffer).unwrap();
-
-            return Ok(())
+            return Ok(EntryInfo { path: path.to_string(), path_type: "file".to_string() })
         },
         "directory" => {
             match create_dir_all(&path).await {
@@ -141,11 +170,11 @@ async fn get_java_part(download_type: DownladTypes, url: &str, file_type: &str, 
                 Err(e) => return Err(e.to_string()),
             }
 
-            return Ok(())
+            return Ok(EntryInfo { path: path.to_string(), path_type: "directory".to_string() })
         }
         _ => {
             println!("Unsupported file type");
-            return Ok(())
+            return Err("".to_string())
         },
     }
 }
@@ -165,6 +194,7 @@ async fn parse_java_manifest(
 ) -> Result<Option<String>, String> {
     let mut exec_file = None;
     let mut downloaded_paths: HashSet<EntryInfo> = HashSet::new();
+    let mut futures: FuturesUnordered<JoinHandle<Option<EntryInfo>>> = FuturesUnordered::new();
 
     if let Some(files) = manifest["files"].as_object() {
         for file in files {
@@ -172,15 +202,21 @@ async fn parse_java_manifest(
                 let raw_path = file.0.to_string();
                 let global_path = format!("{}/{}", java.destination, &raw_path);
 
-                if let Some(file_url) = file.1["downloads"]["lzma"]["url"].as_str() {
-                    match get_java_part(DownladTypes::LZMA, file_url, path_type, &global_path).await {
-                        Ok(_) => (),
-                        Err(e) => return Err(e),
-                    };
-                } else if let Some(file_url) = file.1["downloads"]["raw"]["url"].as_str() {
-                    match get_java_part(DownladTypes::Raw, file_url, path_type, &global_path).await {
-                        Ok(_) => (),
-                        Err(e) => return Err(e),
+
+                if let Some(downloads) = file.1["downloads"].as_object() {
+                    let downloads = downloads.to_owned();
+                    let global_path = global_path.clone();
+                    let path_type = path_type.to_string();
+
+                    futures.push(task::spawn(async move {
+                        match get_java_part(downloads, &path_type, &global_path).await {
+                            Ok(data) => Some(data),
+                            Err(_e) => None,
+                        }
+                    }));
+
+                    if futures.len() >= 100 {
+                        process_futures(&mut futures, &mut downloaded_paths).await;
                     }
                 }
 
@@ -188,15 +224,16 @@ async fn parse_java_manifest(
                     let file_name = &raw_path[raw_path_last_point + 1..];
                     if let Some(is_exec) = file.1["executable"].as_bool() {
                         if path_type == "file" && is_exec == true && file_name == "java"  {
-                            exec_file = Some(global_path.clone());
+                            exec_file = Some(global_path);
                         }
                     }
                 }
 
-                downloaded_paths.insert(EntryInfo { path: global_path, path_type: path_type.to_string() });
             }
         }
     }
+
+    process_futures(&mut futures, &mut downloaded_paths).await;
 
     if let Some(exec_file) = exec_file {
         match register_java(metacache, metacache_path, java, downloaded_paths, &exec_file).await {
@@ -207,6 +244,18 @@ async fn parse_java_manifest(
         Ok(Some(exec_file))
     } else {
         Ok(None)
+    }
+}
+
+async fn process_futures
+(
+    futures: &mut FuturesUnordered<JoinHandle<Option<EntryInfo>>>,
+    downloaded_paths: &mut HashSet<EntryInfo>,
+) {
+    while let Some(result) = futures.next().await {
+        if let Some(entry_info) = result {
+            downloaded_paths.insert(entry_info);
+        }
     }
 }
 
@@ -232,6 +281,7 @@ async fn parse_main_manifest(metacache: &serde_json::Value, java: &mut Java) -> 
                 if major_version == java.version {
                     if let Some(manifest_url) = runtime[0]["manifest"]["url"].as_str() {
 
+                        // Check java installation
                         if let Some(java_sha1) = runtime[0]["manifest"]["sha1"].as_str() {
                             java.sha1 = java_sha1.to_string();
 

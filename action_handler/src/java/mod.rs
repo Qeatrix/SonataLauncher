@@ -36,7 +36,7 @@ impl Java {
         fs::set_permissions(&exec_path, permissions).unwrap();
 
         let output = Command::new(exec_path)
-            .arg("-version")
+            .arg("--version")
             .output()
             .await.unwrap();
 
