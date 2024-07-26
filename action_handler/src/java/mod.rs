@@ -1,12 +1,21 @@
-use std::{fs, os::unix::fs::PermissionsExt};
+use std::{fs::{self, set_permissions}, os::unix::fs::PermissionsExt};
 
 use async_std::process::Command;
 
 pub mod arch;
-pub mod install;
+pub mod extract;
+pub mod download;
+
+use crate::utils::metacache;
 
 const JAVA_VERSIONS_MANIFEST_URL: &str = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 
+
+#[derive(Eq, Hash, PartialEq, Debug)]
+pub struct EntryInfo {
+    path: String,
+    path_type: String,
+}
 
 pub struct Java {
     version: String,
@@ -27,13 +36,17 @@ impl Java {
         }
     }
 
-    pub async fn init(mut self, metacache_path: String) {
-        let exec_path = install::init(&mut self, metacache_path).await.unwrap();
+    pub async fn init(mut self, metacache_path: String) -> Result<(), String> {
+        let mut metacache_value = match metacache::get_json(&metacache_path) {
+            Ok(value) => value,
+            Err(e) => return Err(e),
+        };
 
-        let metadata = fs::metadata(&exec_path).unwrap();
-        let mut permissions = metadata.permissions();
-        permissions.set_mode(0o775);
-        fs::set_permissions(&exec_path, permissions).unwrap();
+        let exec_path = extract::start_extraction(metacache_path, &mut metacache_value, &mut self).await.unwrap();
+
+        if let Err(e) = Self::set_permissions(&exec_path) {
+            return Err(e);
+        }
 
         let output = Command::new(exec_path)
             .arg("--version")
@@ -41,5 +54,22 @@ impl Java {
             .await.unwrap();
 
         println!("{:#?}", output);
+
+        Ok(())
+    }
+
+    fn set_permissions(exec_path: &String) -> Result<(), String> {
+        let metadata = match fs::metadata(&exec_path) {
+            Ok(data) => data,
+            Err(e) => return Err(e.to_string()),
+        };
+
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(0o775);
+
+        match fs::set_permissions(&exec_path, permissions) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        }
     }
 }

@@ -40,7 +40,7 @@ async fn main() -> tide::Result<()> {
             let java_path = format!("{}/.sonata/java", path.display());
             let metacache_path = format!("{}/.sonata/metacache.json", path.display());
             let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), java_path);
-            Java::init(java_properties, metacache_path).await;
+            Java::init(java_properties, metacache_path).await.unwrap();
         },
         None => (),
     };
@@ -90,7 +90,7 @@ async fn download_java_ws(mut ws: WebSocketConnection) -> tide::Result<()> {
                 let java_path = format!("{}/.sonata/java", path.display());
                 let metacache_path = format!("{}/.sonata/metacache.json", path.display());
                 let java_properties = Java::new("21".to_string(), "java-runtime-delta".to_string(), java_path);
-                Java::init(java_properties, metacache_path).await;
+                Java::init(java_properties, metacache_path).await.unwrap();
             },
             None => (),
         };

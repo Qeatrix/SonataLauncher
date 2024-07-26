@@ -22,6 +22,7 @@ cd action_handler && cargo run build
 #### Action Handler
 - [ ] Logger implementation
 - [x] Different Java versions downloader
+  - [x] Comapre every Java downloaded path
   - [ ] Endpoint for Java download
   - [ ] WebSockets integration
 - [x] Home directory handling
