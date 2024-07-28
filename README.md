@@ -39,6 +39,7 @@ cd action_handler && cargo run build
 #### Frontend
 - [ ] Refactor WebSocket messages types
 - [ ] Instance download manager with WebSockets integration
+  - [ ] Switching between percentage and elapsed downloading time
 	- [ ] Correct `Cancel` button handling
 - [ ] Tasks widget on headerbar
 	- [ ] Storage of minimized windows
