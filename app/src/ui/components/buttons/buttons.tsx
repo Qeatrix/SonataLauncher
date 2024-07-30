@@ -1,4 +1,3 @@
-import { gsap } from 'gsap';
 import css from './buttons.module.less';
 
 
@@ -11,17 +10,15 @@ interface IButtonProps {
 
 export default function Button(props: IButtonProps) {
     return (
-        <>
-            <button
-            className={
-                `${css.button}
-                Inter-Display-Regular
-                ${props.primary == true ? css.primary : ''}`
-            }
-            onClick={props.onClick}
-            >
-                {props.text}
-            </button>
-        </>
+        <button
+        className={
+            `${css.button}
+            Inter-Display-Regular
+            ${props.primary == true ? css.primary : ''}`
+        }
+        onClick={props.onClick}
+        >
+            {props.text}
+        </button>
     )
 }
