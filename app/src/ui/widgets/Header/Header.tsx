@@ -13,19 +13,17 @@ function Header() {
     }
 
     return (
-        <>
-            <div className="header">
-                <div className="header-menus" id="header-menus">
-                    {Object.entries(routeNames).map(([key, value], index) => (
-                        <div
-                            key={key}
-                            onClick={() => changeTabPos(index, key)}
-                            className={tabPos.derive(val => `header-tab ${val === index ? 'header-active-tab' : ''}`)}
-                        ></div>
-                    ))}
-                </div>
+        <div className="header">
+            <div className="header-menus" id="header-menus">
+                {Object.entries(routeNames).map(([key, value], index) => (
+                    <div
+                        key={key}
+                        onClick={() => changeTabPos(index, key)}
+                        className={tabPos.derive(val => `header-tab ${val === index ? 'header-active-tab' : ''}`)}
+                    />
+                ))}
             </div>
-        </>
+        </div>
     )
 }
 

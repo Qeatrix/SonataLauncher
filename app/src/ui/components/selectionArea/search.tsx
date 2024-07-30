@@ -32,13 +32,11 @@ export default function Search({query, onSelect, selectedValue}: SearchProps) {
     return (
         <For in={result}>
             {(item, i) => {
-                return <div>
-                    <SelectionItem
-                        name={item.id}
-                        onClick={() => onSelect(item.id, item.url)}
-                        selected={selectedValue.derive(val => val == item.id)}
-                    />
-                </div>
+                return <SelectionItem
+                    name={item.id}
+                    onClick={() => onSelect(item.id, item.url)}
+                    selected={selectedValue.val == item.id}
+                />
             }}
         </For>
     )

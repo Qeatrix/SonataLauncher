@@ -13,20 +13,18 @@ interface IWindow {
 
 export function Window(props: IWindow) {
     return (
-        <>
-            <div className={css.Window}>
-                <div className={css.WindowHeader}>
-                    <div className={css.Name}>
-                        <p className="Inter-Display-Semibold">{props.name}</p>
-                    </div>
-                    <div className={css.ControlsWrapper}>
-                        <button className={css.Minimize}></button>
-                        <button className={css.Maximize}></button>
-                    </div>
+        <div className={css.Window}>
+            <div className={css.WindowHeader}>
+                <div className={css.Name}>
+                    <p className="Inter-Display-Semibold">{props.name}</p>
                 </div>
-                {props.children}
+                <div className={css.ControlsWrapper}>
+                    <button className={css.Minimize}></button>
+                    <button className={css.Maximize}></button>
+                </div>
             </div>
-        </>
+            {props.children}
+        </div>
     )
 }
 
@@ -37,11 +35,9 @@ interface IWindowControls {
 
 export function WindowControls(props: IWindowControls) {
     return (
-        <>
-            <div className={css.WindowControls}>
-                {props.children}
-            </div>
-        </>
+        <div className={css.WindowControls}>
+            {props.children}
+        </div>
     )
 }
 
@@ -52,11 +48,9 @@ interface IFlexBox {
 
 export function FlexBox(props: IFlexBox) {
     return (
-        <>
-            <div className={css.FlexBox}>
-                {props.children}
-            </div>
-        </>
+        <div className={css.FlexBox}>
+            {props.children}
+        </div>
     )
 }
 
@@ -103,7 +97,7 @@ export function ContentStack(props: IContentStack) {
         if (animContent) {
             gsap.to(animContent, {
                 scrollTo: { x: scrollValue },
-                height: animContent.children[props.showIndex.val]?.children[0]?.offsetHeight + 30,
+                height: (animContent.children[props.showIndex.val]?.children[0] as HTMLDivElement).offsetHeight + 30,
                 ease: 'power1.inOut',
                 duration: 0.35,
                 onComplete: () => {
@@ -128,30 +122,26 @@ export function ContentStack(props: IContentStack) {
     }
 
     return (
-        <>
-            <div id="WindowContent" class={css.WindowContent}>
-                {
-                    derive(([val]) => {
-                        handleChange();
+        <div id="WindowContent" class={css.WindowContent}>
+            {
+                derive(([val]) => {
+                    handleChange();
 
-                        return <>
-                            <For in={props.children}>
-                                {(item, i) => {
-                                    return <>
-                                        {
-                                            i === val.val || i === val.oldVal ? (
-                                                <div class={css.Content} id={`Content[${i}]`}>
-                                                    {item}
-                                                </div>
-                                            ) : null
-                                        }
-                                    </>
-                                }}
-                            </For>
-                        </> 
-                    }, [props.showIndex])
-                }
-            </div>
-        </>
+                    return <For in={props.children}>
+                            {(item, i) => {
+                                return <>
+                                    {
+                                        i === val.val || i === val.oldVal ? (
+                                            <div class={css.Content} id={`Content[${i}]`}>
+                                                {item}
+                                            </div>
+                                        ) : null
+                                    }
+                                </>
+                            }}
+                        </For>
+                }, [props.showIndex])
+            }
+        </div>
     )
 }

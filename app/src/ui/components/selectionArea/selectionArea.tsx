@@ -7,7 +7,7 @@ import Search from "./search";
 
 
 interface ISelectionArea {
-    children: JSX.Element | JSX.Element[],
+    children: JSX.Element | JSX.Element[] | Reactive<JSX.Element> | Reactive<JSX.Element[]>,
     name: string,
     dataScheme?: any,
     customEvent?: () => void,
@@ -61,37 +61,37 @@ export function SelectionArea(props: ISelectionArea) {
 
 interface ISelectionItem {
     name: string,
-    onClick?: (e: any) => void,
-    selected?: Reactive<boolean>,
+    onClick?: (e: Event) => void,
+    selected?: boolean,
     id?: string,
 }
 
 export function SelectionItem(props: ISelectionItem) {
-    const asd = (e: any) => {
-        props.selected?.derive(val => console.log(val));
-        e();
+    const asd = (e: Event) => {
+
+        props.onClick && props.onClick(e);
+
+        const button = e.target as HTMLButtonElement
+
+        button.parentElement?.querySelectorAll(`button.${css.SelectedButton}`).forEach((elem) => {
+            elem.classList.remove(css.SelectedButton)
+        })
+
+        button.classList.add(css.SelectedButton)
     }
 
     return (
         <button 
-            className={props.selected?.derive(val => val == true ? css.SelectedButton : "")}
-            onClick={() => asd(props.onClick)}
+            className={props.selected && props.selected == true ? css.SelectedButton : ""}
+            onClick={asd}
             id={props.id}
         >
             {props.name}
-            {props.selected?.derive(val => {
-                if (val) {
-                    return <>
-                        <Svg>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 6L9 17L4 12" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </Svg>
-                    </>
-                } else {
-                    return <></>;
-                }
-            })}
+            <Svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </Svg>
         </button>
     )
 }

@@ -201,32 +201,28 @@ const Instances = () => {
                         </FlexBox>
                         <FlexBox>
                             <SelectionArea selectedValue={selectedVersionId} onValueChange={handleVersionChange} name="Versions" searchBar={true}>
-                                <div>
-                                    {versionsManifest.derive(val => {
-                                        return <For in={val.versions}>
-                                            {(item, i) => {
-                                                return <SelectionItem
-                                                    name={item.id}
-                                                    onClick={() => handleVersionChange(item.id, item.url)}
-                                                    selected={selectedVersionId.derive(val => val == item.id)}
-                                                />
-                                            }}
-                                        </For>
-                                    })}
-                                </div>
-                            </SelectionArea>
-                            <SelectionArea selectedValue={selectedVersionId} onValueChange={handleVersionChange} name="Loader">
-                                <div>
-                                    <For in={Loaders}>
-                                        {(loader, i) => {
+                                {versionsManifest.derive(val => {
+                                    return <For in={val.versions}>
+                                        {(item, i) => {
                                             return <SelectionItem
-                                                name={loader.name}
-                                                onClick={() => handleLoaderChange(i)}
-                                                selected={selectedLoaderNumber.derive(val => val == i)}
+                                                name={item.id}
+                                                onClick={() => handleVersionChange(item.id, item.url)}
+                                                selected={selectedVersionId.val == item.id}
                                             />
                                         }}
                                     </For>
-                                </div>
+                                })}
+                            </SelectionArea>
+                            <SelectionArea selectedValue={selectedVersionId} onValueChange={handleVersionChange} name="Loader">
+                                <For in={Loaders}>
+                                    {(loader, i) => {
+                                        return <SelectionItem
+                                            name={loader.name}
+                                            onClick={() => handleLoaderChange(i)}
+                                            selected={selectedLoaderNumber.val == i}
+                                        />
+                                    }}
+                                </For>                               
                             </SelectionArea>
                         </FlexBox>
                     </div>

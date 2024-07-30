@@ -41,35 +41,39 @@
         gap: 10px;
         overflow-y: scroll;
 
-        &>div {
+        &>button {
+            height: 35px;
+            min-height: 35px;
             width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 7px 10px;
+            gap: 10px;
+            font-size: 16px;
+            background: transparent;
 
-            &>button {
-                height: 35px;
-                min-height: 35px;
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                padding: 7px 10px;
-                gap: 10px;
-                font-size: 16px;
-                background: transparent;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
 
-                border-radius: 7px;
-                border: none;
+            &>svg {
+                margin-inline-start: auto;
+                display: none;
+            }
 
-                &>svg {
-                    margin-inline-start: auto;
+            &.SelectedButton {
+                background-color: #EBEBEB;
+
+                svg {
+                    display: block;
                 }
+            }
 
-                &.SelectedButton {
-                    background-color: #EBEBEB;
-                }
+            
 
-                &:focus-visible {
-                    .anim-focus;
-                }
+            &:focus-visible {
+                .anim-focus;
             }
         }
     }

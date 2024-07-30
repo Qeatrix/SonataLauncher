@@ -11,6 +11,5 @@ export const routeNames = {
 
 export const routes = {
     [routeNames.root]: () => <NewsList />,
-    [routeNames.instances]: () => <OldInstances />,
-    [routeNames.uidebug]: () => <UIKitDebug />,
+    [routeNames.instances]: () => <OldInstances />
 }

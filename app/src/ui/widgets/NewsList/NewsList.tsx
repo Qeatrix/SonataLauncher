@@ -1,11 +1,12 @@
+import { For } from 'hywer/x/html';
 import NewPreview from './assets/new-preview-example.png';
 import './NewsList.css';
 
 function NewsList() {
     const data = [
         {
-            "tag": "minecraft news",
-            "name": "new on realms: affordable housing",
+            "tag": "sonata news",
+            "name": "ребята пиздец лаунчер закрывается",
             "imglink": "asd",
             "descr": "if there is one thing i wish i could give to the next generation that’s coming up in this increasingly expensive world, it would be better housing opportunities. barring that, maybe some new minecraft maps from our community would suffice? for those of us that are not castle - accommodated (if you are, hook me up with your supplier), it’s rare that you have an optimal living situation – these maps understand you!",
             "date": "april 29, 2022"
@@ -20,10 +21,10 @@ function NewsList() {
     ]
 
     return (
-        <>
-            <div className="feed">
-                {data.map((news, key) => (
-                    <div key={key} className="new">
+        <div className="feed">
+            <For in={data}>
+                {(news, key) => {
+                    return <div key={key} className="new">
                         <div className="new-header">
                             <div className="new-tag">{news.tag}</div>
                             <div className="new-name">{news.name}</div>
@@ -40,9 +41,9 @@ function NewsList() {
                             <p className="new-date">{news.date}</p>
                         </div>
                     </div>
-                ))}
-            </div>
-        </>
+                }}
+            </For>
+        </div>
     ) 
 }
 
