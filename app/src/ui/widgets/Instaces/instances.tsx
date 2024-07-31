@@ -1,12 +1,11 @@
-import { derive, effect, ref } from 'hywer';
+import { ref } from 'hywer';
 import Api from '@/data/api';
 import Store from '@/data/store';
 import { VersionsManifest, Version, RequestInstance, ProgressTargetsList, ProgressMessage, ProgressStatuses, ProgressMessageFinish } from '@/data/types';
 
-import css from "./Instances.module.less";
 import { SelectionArea, SelectionItem } from '@/ui/components/selectionArea/selectionArea';
 import { ContentStack, FlexBox, Window, WindowControls } from '@/ui/components/window/window';
-import { ProgressDisplay, ProgressItem } from '@/ui/widgets/progressDisplay/ProgressDisplay';
+import { ProgressDisplay } from '@/ui/widgets/progressDisplay/ProgressDisplay';
 import Input from '@/ui/components/input/input';
 import { For } from 'hywer/x/html';
 import Button from '@/ui/components/buttons/buttons';
@@ -107,9 +106,9 @@ const Instances = () => {
 
     const getVersionsManifest = async () => {
         Api.getVersionsManifest()
-            .then(json => { 
-                Store.setGlobalManifestData(json); 
-                versionsManifest.val = json as unknown as VersionsManifest; 
+            .then(json => {
+                Store.setGlobalManifestData(json);
+                versionsManifest.val = json as unknown as VersionsManifest;
             })
             .catch(err => { console.log(err) })
 
@@ -131,7 +130,7 @@ const Instances = () => {
         info.forEach((value, key) => {
             infoObject[key] = value;
         });
-        
+
         // Api.requestVersionDownload("asd", selectedVersion.val.url, infoObject)
         //     .then(json => { console.log(json) })
         //     .catch(err => { console.log(err) })
@@ -163,6 +162,8 @@ const Instances = () => {
         requestVersionDownload();
         contentStackIndex.val++;
     }
+
+    const tabSelection = ref(0);
 
     return (
         <>
@@ -222,7 +223,7 @@ const Instances = () => {
                                             selected={selectedLoaderNumber.val == i}
                                         />
                                     }}
-                                </For>                               
+                                </For>
                             </SelectionArea>
                         </FlexBox>
                     </div>

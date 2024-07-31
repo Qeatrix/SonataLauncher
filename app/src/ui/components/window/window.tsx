@@ -77,22 +77,18 @@ export function ContentStack(props: IContentStack) {
 
     const WindowContentWidth = () => {
         const animContent = document.getElementById('WindowContent');
-        let scrollValue: any = "max";
+        let scrollValue = 0;
 
-        // console.log(animContent?.children);
 
-        if (props.showIndex.oldVal < props.showIndex.val) {
-            // console.log("Going forward");
-        } else if (props.showIndex.oldVal > props.showIndex.val) {
-            // console.log("Going previous");
-            scrollValue = 0;
+        const nextWindowComponent = document.getElementById(`Content[${props.showIndex.val}]`);
 
-            if (animContent) {
-                animContent.scrollLeft = animContent?.scrollWidth;
-                console.log(animContent.children[props.showIndex.oldVal]);
+        if (nextWindowComponent) {
+            if (props.showIndex.val === 0) {
+                scrollValue = 0;
+            } else {
+                scrollValue = nextWindowComponent.getBoundingClientRect().width * props.showIndex.val;
             }
         }
-
 
         if (animContent) {
             gsap.to(animContent, {
@@ -100,48 +96,25 @@ export function ContentStack(props: IContentStack) {
                 height: (animContent.children[props.showIndex.val]?.children[0] as HTMLDivElement).offsetHeight + 30,
                 ease: 'power1.inOut',
                 duration: 0.35,
-                onComplete: () => {
-                    // animContent.children[props.showIndex.oldVal].children[0]?.parentElement?.remove();
-
-                    let oldComponent = document.getElementById(`Content[${props.showIndex.oldVal}]`);
-                    oldComponent?.remove();
-                }
             })
         }
     }
 
-    const handleChange = () => {
-        if (Loaded.val === false) {
-            Loaded.val = true;
-        } else {
-            OldIndex.val = currentIndex.val;
-            setTimeout(() => {
-                WindowContentWidth();
-            }, 0)
-        }
+    props.showIndex.sub = (val) => {
+        setTimeout(() => {
+            WindowContentWidth();
+        }, 0)
     }
 
     return (
         <div id="WindowContent" class={css.WindowContent}>
-            {
-                derive(([val]) => {
-                    handleChange();
-
-                    return <For in={props.children}>
-                            {(item, i) => {
-                                return <>
-                                    {
-                                        i === val.val || i === val.oldVal ? (
-                                            <div class={css.Content} id={`Content[${i}]`}>
-                                                {item}
-                                            </div>
-                                        ) : null
-                                    }
-                                </>
-                            }}
-                        </For>
-                }, [props.showIndex])
-            }
-        </div>
+            <For in={props.children}>
+                {(item, i) => {
+                    return <div class={css.Content} id={`Content[${i}]`}>
+                        {item}
+                    </div>
+                }}
+            </For>
+    </div>
     )
 }
