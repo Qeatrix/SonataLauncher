@@ -30,7 +30,7 @@ cd action_handler && cargo run build
 - [ ] Implement **natives** folder handling
 - [ ] Separate endpoint for instance launching
 - [ ] Code refactoring in `instance/mod.rs`
-- [ ] Endpoint for sending of installed instances
+- [ ] Endpoint for sending installed instances
 	- [x] Instance directory initialization
  		- [x] Refactor `init_instance_dir` function
 	- [x] Installed instances storing implementation in JSON
@@ -38,7 +38,7 @@ cd action_handler && cargo run build
 	- [ ] Storing authenticated accounts
 #### Frontend
 - [ ] Refactor WebSocket messages types
-- [ ] Instance download manager with WebSockets integration
+- [x] Instance download manager with WebSockets integration
   - [ ] Switching between percentage and elapsed downloading time
 	- [ ] Correct `Cancel` button handling
 - [ ] Tasks widget on headerbar
@@ -47,6 +47,11 @@ cd action_handler && cargo run build
 	- [ ] Reusable grid display component
 - [ ] Account authentication
 - [ ] Refactor localization store
+- [ ] Migrate from Electron to Tauri
+    - [ ] Verify correct rendering of the interface in webview on different platforms
+        - [ ] Linux
+        - [x] macOS
+        - [ ] Windows
 
 ## Application Architecture
 ![Application Architecture Map](./Application%20Architecture.png)
