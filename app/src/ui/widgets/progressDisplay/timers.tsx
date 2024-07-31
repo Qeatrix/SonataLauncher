@@ -25,9 +25,6 @@ export const startWorknameBlinkTimer = (
     css: any,
     worknamesBlinked: boolean
 ) => {
-    const lastProcessedElement = getLastProcessedElement(componentId, currentWorkId);
-    const workName = getWorkNames(componentId, currentWorkId.val);
-
     const transitionType = "power4.Out"
     const transitionDuration = 1;
 
@@ -56,20 +53,28 @@ export const startWorknameBlinkTimer = (
     // }, 4000)
 
     setTimeout(() => {
-        if (workName) {
-            gsap.to(workName[0], {
+        const workNames = getWorkNames(componentId, currentWorkId.val);
+
+        if (workNames) {
+            gsap.to(workNames[0], {
                 opacity: 0,
                 ease: transitionType,
                 duration: transitionDuration,
+                onComplete: () => {
+                    console.log(workNames[0]);
+                }
             })
 
-            gsap.to(workName[1], {
+            gsap.to(workNames[1], {
                 opacity: 1,
                 ease: transitionType,
                 duration: transitionDuration,
+                onComplete: () => {
+                    console.log(workNames[1]);
+                }
             })
         }
-    }, 7000);
+    }, 3000);
 }
 
 export const stopWorknameBlinkTimer = (timerInterval: number, worknamesBlinked: boolean) => {

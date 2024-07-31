@@ -75,21 +75,19 @@ export function ProgressDisplay(props: IProgressDisplay) {
                 earlyTweaksDone = true;
             }
 
-            const workNames = getWorkNames(componentId, currentWorkId.val);
-            if (pendingClassRemoved === false && workNames) {
-                gsap.to(workNames[0], {
-                    beforeStart: () => {
-                        workNames[0].classList.remove(css.Pending);
-                    },
-                    opacity: 1,
-                    ease: 'linear',
-                    duration: 1,
-                    onComplete: () => {
-                    }
-                })
+            // const workNames = getWorkNames(componentId, currentWorkId.val);
+            // if (pendingClassRemoved === false && workNames) {
+            //     gsap.to(workNames[0], {
+            //         beforeStart: () => {
+            //             workNames[0].classList.remove(css.Pending);
+            //         },
+            //         opacity: 1,
+            //         ease: 'linear',
+            //         duration: 1,
+            //     })
 
-                pendingClassRemoved = true;
-            }
+            //     pendingClassRemoved = true;
+            // }
         }
 
         if (val.data.status === ProgressStatuses.COMPLETED) {
@@ -120,7 +118,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
                     const workNames = getWorkNames(componentId, currentWorkId.val);
                     if (workNames) {
                         gsap.to(workNames[0], {
-                            opacity: "1",
+                            opacity: 1,
                             left: absposCompletedWorknameOffset,
                             ease: 'power1.InOut',
                             duration: 0.35,
@@ -130,7 +128,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
                         })
 
                         gsap.to(workNames[1], {
-                            opacity: "0",
+                            opacity: 0,
                             left: absposCompletedWorknameOffset,
                             ease: 'power1.InOut',
                             duration: 0.35,
@@ -144,7 +142,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
                             duration: 0.35,
                         })
 
-                        workNames[0].classList.remove(css.Pending);
+                        // workNames[0].classList.remove(css.Pending);
                     }
 
                     gsap.to(doneIcon, {
@@ -225,7 +223,7 @@ export function ProgressDisplay(props: IProgressDisplay) {
                                                 <DoneIcon style="opacity:0" id={constructElementIconId(componentId, i)} />
                                                 <div class={css.Container}>
                                                     <div class={css.NameContainer}>
-                                                        <p class={`${css.Name} ${css.Pending}`} id={constructElementNameId(componentId, i, 0)}>{TranslationStore.t(stage_name)}</p>
+                                                        <p class={`${css.Name}`} id={constructElementNameId(componentId, i, 0)}>{TranslationStore.t(stage_name)}</p>
                                                         <p class={`${css.Name}`} style="opacity:0" id={constructElementNameId(componentId, i, 1)}>{
                                                             props.message.derive(val => {
                                                                 // TODO: Second <p> may still be shown after process completion

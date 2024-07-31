@@ -1,5 +1,6 @@
 import Constants from "@/data/constants";
 import { RequestInstance } from "@/data/types";
+import { fetch as tfetch, ResponseType } from "@tauri-apps/api/http";
 
 class Api {
     public static readonly url = Constants.apiUrl;
@@ -30,24 +31,23 @@ class Api {
     }
 
     public async getVersionsManifest(): Promise<JSON> {
-        return new Promise<JSON>((res, rej) => {
-            fetch(Api.url + Constants.endpoints.versionsManifest, {
-                method: 'GET',
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP Error, status: ${response.status}`);
-                }
+      try {
+        const response = await tfetch(
+          Api.url + Constants.endpoints.versionsManifest,
+          {
+            method: "GET",
+            responseType: ResponseType.JSON,
+          },
+        );
 
-                return response.json();
-            })
-            .then(json => {
-                res(json);
-            })
-            .catch(err => {
-                rej(err);
-            })
-        })
+        if (response.status !== 200) {
+          throw new Error(`HTTP Error, status: ${response.status}`);
+        }
+
+        return response.data as JSON;
+      } catch (err) {
+        throw new Error(`Error fetching versions manifest: ${err}`);
+      }
     }
 
     public async requestVersionDownload(name: string, url: string, info: Record<string, string>): Promise<JSON> {
